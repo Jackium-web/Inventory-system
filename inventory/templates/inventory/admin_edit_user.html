@@ -1,0 +1,83 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Edit User | Hotel Inventory{% endblock %}
+{% block page_title %}Edit User{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-user-page { max-width: 720px; margin: auto; }
+    .edit-user-card { background: white; border-radius: 14px; padding: 28px; box-shadow: 0 4px 15px rgba(0, 0, 0, .05); }
+    .edit-user-card h1 { margin-bottom: 8px; }
+    .edit-user-card > p { color: #64748b; margin-bottom: 22px; }
+    .form-group { margin-bottom: 17px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 7px; }
+    .form-control { width: 100%; padding: 11px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .check-row { display: flex; gap: 9px; align-items: center; margin: 14px 0; }
+    .check-row label { margin: 0; font-weight: 600; }
+    .alert { padding: 12px 14px; border-radius: 8px; background: #fee2e2; color: #991b1b; margin-bottom: 18px; }
+    .form-actions { display: flex; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+    .btn { border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .btn-primary { background: #0f766e; color: white; }
+    .btn-secondary { background: #e5e7eb; color: #172033; }
+    @media (max-width: 650px) { .form-grid { grid-template-columns: 1fr; gap: 0; } .form-actions { flex-direction: column; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-user-page">
+    <div class="edit-user-card">
+        <h1>Edit {{ account.username }}</h1>
+        <p>Update this user's account details and access status.</p>
+
+        {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input class="form-control" id="username" name="username" value="{{ account.username }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input class="form-control" id="email" name="email" type="email" value="{{ account.email }}">
+                </div>
+                <div class="form-group">
+                    <label for="first_name">First name</label>
+                    <input class="form-control" id="first_name" name="first_name" value="{{ account.first_name }}">
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Last name</label>
+                    <input class="form-control" id="last_name" name="last_name" value="{{ account.last_name }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">New password</label>
+                <input class="form-control" id="password" name="password" type="password" minlength="8">
+                <small>Leave blank to keep the current password.</small>
+            </div>
+
+            <div class="check-row">
+                <input id="is_active" name="is_active" type="checkbox" {% if account.is_active %}checked{% endif %}>
+                <label for="is_active">Account is active</label>
+            </div>
+
+            {% if account.id != user.id %}
+                <div class="check-row">
+                    <input id="is_staff" name="is_staff" type="checkbox" {% if account.is_staff %}checked{% endif %}>
+                    <label for="is_staff">Administrator access</label>
+                </div>
+            {% else %}
+                <p><strong>Your administrator access cannot be removed from this page.</strong></p>
+            {% endif %}
+
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Save Changes</button>
+                <a class="btn btn-secondary" href="{% url 'admin_users' %}">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

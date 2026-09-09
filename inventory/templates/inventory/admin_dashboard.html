@@ -1,0 +1,77 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Admin Dashboard | Hotel Inventory{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-page { max-width: 1200px; margin: auto; }
+    .admin-heading { margin-bottom: 24px; }
+    .admin-heading h1 { font-size: 28px; margin-bottom: 6px; }
+    .admin-heading p { color: #64748b; }
+    .admin-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+    .admin-stat, .admin-panel { background: white; border-radius: 14px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); }
+    .admin-stat span { display: block; color: #64748b; font-size: 13px; margin-bottom: 8px; }
+    .admin-stat strong { font-size: 28px; color: #0f766e; }
+    .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .admin-panel h2 { font-size: 18px; margin-bottom: 16px; }
+    .admin-actions { display: grid; gap: 10px; }
+    .admin-actions a { justify-content: flex-start; }
+    .admin-list { list-style: none; }
+    .admin-list li { display: flex; justify-content: space-between; gap: 15px; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+    .admin-list li:last-child { border-bottom: none; }
+    .admin-muted { color: #64748b; font-size: 13px; }
+    @media (max-width: 900px) { .admin-stats { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .admin-stats, .admin-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="admin-heading">
+        <h1>Administrator Dashboard</h1>
+        <p>Manage users, inventory structure, and system data.</p>
+    </div>
+
+    <div class="admin-stats">
+        <div class="admin-stat"><span>Total users</span><strong>{{ total_users }}</strong></div>
+        <div class="admin-stat"><span>Active users</span><strong>{{ active_users }}</strong></div>
+        <div class="admin-stat"><span>Products</span><strong>{{ total_products }}</strong></div>
+        <div class="admin-stat"><span>Categories</span><strong>{{ total_categories }}</strong></div>
+        <div class="admin-stat"><span>Dynamic fields</span><strong>{{ total_fields }}</strong></div>
+    </div>
+
+    <div class="admin-grid">
+        <section class="admin-panel">
+            <h2>Administration</h2>
+            <div class="admin-actions">
+                <a class="btn btn-primary" href="{% url 'admin_users' %}">Create users and assign departments</a>
+            </div>
+        </section>
+
+        <section class="admin-panel">
+            <h2>Inventory controls</h2>
+            <div class="admin-actions">
+                <a class="btn btn-primary" href="{% url 'categories' %}">Manage categories</a>
+                <a class="btn btn-secondary" href="{% url 'product_fields' %}">Manage product fields</a>
+                    <a class="btn btn-secondary" href="{% url 'generate_barcodes' %}">Generate barcodes</a>
+                <a class="btn btn-secondary" href="{% url 'barcode_settings' %}">Manage barcode settings</a>
+            </div>
+        </section>
+    </div>
+
+    <section class="admin-panel" style="margin-top: 20px;">
+        <h2>Recently added products</h2>
+        <ul class="admin-list">
+            {% for product in recent_products %}
+                <li>
+                    <a href="{% url 'product_details' product.id %}">{{ product.product_name }}</a>
+                    <span class="admin-muted">{{ product.barcode.barcode_number }}</span>
+                </li>
+            {% empty %}
+                <li class="admin-muted">No products have been added yet.</li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
+{% endblock %}

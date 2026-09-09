@@ -1,0 +1,263 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Select Department | Hotel Inventory{% endblock %}
+
+{% block page_title %}Select Department{% endblock %}
+
+{% block extra_css %}
+<style>
+
+.department-page {
+    max-width: 850px;
+    margin: auto;
+}
+
+.department-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.department-header h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.department-header p {
+    color: #64748b;
+}
+
+.barcode-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+
+.barcode-label {
+    color: #64748b;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.barcode-number {
+    font-size: 21px;
+    font-weight: 700;
+    color: #1d4ed8;
+}
+
+.department-card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+
+.department-card h2 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.department-card p {
+    color: #64748b;
+}
+
+.department-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.department-option {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 18px;
+    text-decoration: none;
+    color: #0f172a;
+    transition: 0.2s ease;
+    background: white;
+}
+
+.department-option:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+    transform: translateY(-2px);
+}
+
+.department-option strong {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.department-option span {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.no-department {
+    text-align: center;
+    padding: 35px 20px;
+}
+
+.no-department-icon {
+    font-size: 45px;
+    margin-bottom: 15px;
+}
+
+.no-department h2 {
+    color: #991b1b;
+}
+
+.no-department p {
+    max-width: 500px;
+    margin: auto;
+    line-height: 1.6;
+}
+
+@media (max-width: 650px) {
+
+    .department-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .department-card {
+        padding: 20px;
+    }
+
+}
+
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="department-page">
+
+    <div class="department-header">
+
+        <h1>Select Department</h1>
+
+        <p>
+            Select the department that this product belongs to.
+        </p>
+
+    </div>
+
+
+    <div class="barcode-box">
+
+        <div class="barcode-label">
+            SCANNED BARCODE
+        </div>
+
+        <div class="barcode-number">
+            {{ barcode.barcode_number }}
+        </div>
+
+    </div>
+
+
+    <div class="department-card">
+
+        {% if no_departments %}
+
+            <div class="no-department">
+
+                <div class="no-department-icon">
+                    WARNING
+                </div>
+
+                <h2>
+                    {% if no_assigned_departments %}
+                        No Department Assigned
+                    {% else %}
+                        No Departments Available
+                    {% endif %}
+                </h2>
+
+                <p>
+                    {% if no_assigned_departments %}
+                        You have not been assigned a department to manage yet.
+                    {% else %}
+                        This product cannot be registered because there are currently no departments configured in the system.
+                    {% endif %}
+                </p>
+
+                <p>
+                    Please contact the system administrator to assign you a department before continuing.
+                </p>
+
+                <a
+                    href="{% url 'scan_barcode' %}"
+                    class="btn btn-secondary"
+                    style="margin-top:20px;"
+                >
+                    Back to Scanner
+                </a>
+
+            </div>
+
+        {% else %}
+
+            <h2>
+                Which department?
+            </h2>
+
+            <p>
+                The department determines which product fields
+                you will need to fill in.
+            </p>
+
+
+            {% if error %}
+
+                <div class="alert alert-danger">
+                    {{ error }}
+                </div>
+
+            {% endif %}
+
+
+            <div class="department-grid">
+
+                {% for department in departments %}
+
+                    <a
+                        href="{% url 'scan_barcode' %}?barcode={{ barcode.barcode_number }}&department={{ department.id }}"
+                        class="department-option"
+                    >
+
+                        <strong>
+                            {{ department.name }}
+                        </strong>
+
+                        {% if department.description %}
+
+                            <span>
+                                {{ department.description }}
+                            </span>
+
+                        {% else %}
+
+                            <span>
+                                Product department
+                            </span>
+
+                        {% endif %}
+
+                    </a>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

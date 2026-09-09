@@ -1,0 +1,126 @@
+<style>
+    .admin-dashboard-section {
+        margin-top: 25px;
+    }
+
+    .admin-dashboard-heading {
+        margin-bottom: 18px;
+    }
+
+    .admin-dashboard-heading h2 {
+        font-size: 21px;
+        margin-bottom: 5px;
+    }
+
+    .admin-dashboard-heading p {
+        color: #64748b;
+    }
+
+    .admin-dashboard-stats,
+    .admin-dashboard-grid {
+        display: grid;
+        gap: 16px;
+    }
+
+    .admin-dashboard-stats {
+        grid-template-columns: repeat(4, 1fr);
+        margin-bottom: 18px;
+    }
+
+    .admin-dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .admin-dashboard-stat,
+    .admin-dashboard-panel {
+        background: white;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+    }
+
+    .admin-dashboard-stat span {
+        display: block;
+        color: #64748b;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    .admin-dashboard-stat strong {
+        font-size: 28px;
+        color: #0f766e;
+    }
+
+    .admin-dashboard-panel h3 {
+        font-size: 17px;
+        margin-bottom: 14px;
+    }
+
+    .admin-dashboard-actions {
+        display: grid;
+        gap: 10px;
+    }
+
+    .admin-dashboard-actions .btn {
+        justify-content: flex-start;
+    }
+
+    @media (max-width: 900px) {
+        .admin-dashboard-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 600px) {
+        .admin-dashboard-stats,
+        .admin-dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<section class="admin-dashboard-section">
+    <div class="admin-dashboard-heading">
+        <h2>Administrator Controls</h2>
+        <p>Manage users, departments, fields, and barcode operations from this dashboard.</p>
+    </div>
+
+    <div class="admin-dashboard-stats">
+        <div class="admin-dashboard-stat">
+            <span>Total users</span>
+            <strong>{{ total_users }}</strong>
+        </div>
+        <div class="admin-dashboard-stat">
+            <span>Active users</span>
+            <strong>{{ active_users }}</strong>
+        </div>
+        <div class="admin-dashboard-stat">
+            <span>Categories</span>
+            <strong>{{ total_categories }}</strong>
+        </div>
+        <div class="admin-dashboard-stat">
+            <span>Dynamic fields</span>
+            <strong>{{ total_fields }}</strong>
+        </div>
+    </div>
+
+    <div class="admin-dashboard-grid">
+        <section class="admin-dashboard-panel">
+            <h3>People and access</h3>
+            <div class="admin-dashboard-actions">
+                <a class="btn btn-primary" href="{% url 'admin_users' %}">Create users and assign departments</a>
+            </div>
+        </section>
+
+        <section class="admin-dashboard-panel">
+            <h3>Inventory administration</h3>
+            <div class="admin-dashboard-actions">
+                <a class="btn btn-primary" href="{% url 'categories' %}">Manage categories</a>
+                <a class="btn btn-secondary" href="{% url 'product_fields' %}">Manage product fields</a>
+                <a class="btn btn-secondary" href="{% url 'places' %}">Manage hotel places</a>
+                <a class="btn btn-secondary" href="{% url 'generate_barcodes' %}">Generate barcodes</a>
+                <a class="btn btn-secondary" href="{% url 'barcode_settings' %}">Manage barcode settings</a>
+            </div>
+        </section>
+    </div>
+</section>

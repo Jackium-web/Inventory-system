@@ -1,0 +1,95 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Users and Departments | Hotel Inventory{% endblock %}
+{% block page_title %}Users and Departments{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-page { max-width: 1100px; margin: auto; }
+    .admin-grid { display: grid; grid-template-columns: 360px 1fr; gap: 20px; }
+    .admin-panel { background: white; border-radius: 14px; padding: 24px; box-shadow: 0 4px 15px rgba(0, 0, 0, .05); }
+    .admin-panel h1, .admin-panel h2 { margin-bottom: 8px; }
+    .admin-panel p { color: #64748b; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 7px; }
+    .form-control { width: 100%; padding: 11px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
+    .btn { border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: #0f766e; color: white; }
+    .btn-secondary { background: #e5e7eb; color: #172033; }
+    .alert { padding: 12px 14px; border-radius: 8px; background: #fee2e2; color: #991b1b; margin-bottom: 18px; }
+    .user-row { padding: 16px 0; border-bottom: 1px solid #e5e7eb; }
+    .user-row:last-child { border-bottom: 0; }
+    .user-heading { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 10px; }
+    .user-name { font-weight: 700; }
+    .user-status { color: #64748b; font-size: 13px; }
+    .assignment { display: inline-flex; align-items: center; gap: 8px; background: #eff6ff; color: #1d4ed8; border-radius: 6px; padding: 5px 8px; margin: 3px 4px 3px 0; font-size: 13px; }
+    .assignment form { display: inline; }
+    .remove { border: 0; background: transparent; color: #991b1b; cursor: pointer; padding: 0; }
+    .assign-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 12px; }
+    @media (max-width: 850px) { .admin-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="admin-grid">
+        <section class="admin-panel">
+            <h1>Create User</h1>
+            <p>Create a normal inventory user, then assign a department below.</p>
+            {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_user">
+                <div class="form-group"><label for="username">Username</label><input class="form-control" id="username" name="username" required></div>
+                <div class="form-group"><label for="password">Temporary password</label><input class="form-control" id="password" name="password" type="password" required></div>
+                <div class="form-group"><label for="first_name">First name</label><input class="form-control" id="first_name" name="first_name"></div>
+                <div class="form-group"><label for="last_name">Last name</label><input class="form-control" id="last_name" name="last_name"></div>
+                <button class="btn btn-primary" type="submit">Create User</button>
+            </form>
+        </section>
+
+        <section class="admin-panel">
+            <h2>Users and Department Access</h2>
+            <p>Assign each user only to the department they are responsible for.</p>
+            {% for account in users %}
+                <div class="user-row">
+                    <div class="user-heading">
+                        <span class="user-name">{{ account.username }}</span>
+                        <span class="user-status">
+                            {% if account.is_staff %}Administrator{% elif account.is_active %}Active{% else %}Inactive{% endif %}
+                            <a href="{% url 'admin_edit_user' account.id %}" style="margin-left: 10px; color: #2563eb;">Edit</a>
+                        </span>
+                    </div>
+                    <div>
+                        {% for assignment in account.category_assignments.all %}
+                            <span class="assignment">
+                                {{ assignment.category.name }}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="remove_assignment">
+                                    <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                                    <button class="remove" title="Remove assignment" type="submit">x</button>
+                                </form>
+                            </span>
+                        {% empty %}
+                            <span class="user-status">No department assigned</span>
+                        {% endfor %}
+                    </div>
+                    <form class="assign-form" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="assign_category">
+                        <input type="hidden" name="user_id" value="{{ account.id }}">
+                        <select class="form-control" name="category_id" required>
+                            <option value="">Assign department...</option>
+                            {% for category in categories %}<option value="{{ category.id }}">{{ category.name }}</option>{% endfor %}
+                        </select>
+                        <button class="btn btn-secondary" type="submit">Assign</button>
+                    </form>
+                </div>
+            {% empty %}
+                <p>No users have been created yet.</p>
+            {% endfor %}
+        </section>
+    </div>
+</div>
+{% endblock %}

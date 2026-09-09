@@ -1,0 +1,245 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Scan Barcode | Hotel Inventory{% endblock %}
+
+{% block page_title %}Scan Barcode{% endblock %}
+
+{% block extra_css %}
+<style>
+    .scanner-page {
+        max-width: 850px;
+        margin: auto;
+    }
+
+    .scanner-intro {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .scanner-intro h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+    }
+
+    .scanner-intro p {
+        color: #64748b;
+        font-size: 15px;
+    }
+
+    .scanner-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    #reader {
+        width: 100%;
+        max-width: 650px;
+        margin: auto;
+        overflow: hidden;
+        border-radius: 12px;
+    }
+
+    #reader video {
+        border-radius: 12px;
+    }
+
+    .scan-status {
+        text-align: center;
+        margin-top: 18px;
+        padding: 12px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 14px;
+    }
+
+    .manual-section {
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .manual-section h3 {
+        font-size: 17px;
+        margin-bottom: 6px;
+    }
+
+    .manual-section p {
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+
+    .manual-form {
+        display: flex;
+        gap: 10px;
+    }
+
+    .manual-form input {
+        flex: 1;
+    }
+
+    .manual-form button {
+        white-space: nowrap;
+    }
+
+    @media (max-width: 600px) {
+
+        .scanner-card {
+            padding: 15px;
+        }
+
+        .scanner-intro h1 {
+            font-size: 23px;
+        }
+
+        .manual-form {
+            flex-direction: column;
+        }
+
+        .manual-form button {
+            width: 100%;
+        }
+
+        #reader {
+            border-radius: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="scanner-page">
+
+    <div class="scanner-intro">
+        <h1>Scan a Barcode</h1>
+        <p>
+            Point your phone camera at a hotel inventory barcode.
+        </p>
+    </div>
+
+
+    <div class="scanner-card">
+
+        <!-- Camera Scanner -->
+        <div id="reader"></div>
+
+        <div id="status" class="scan-status">
+            Starting camera...
+        </div>
+
+
+        <!-- Manual Backup -->
+        <div class="manual-section">
+
+            <h3>Enter Barcode Manually</h3>
+
+            <p>
+                If the camera cannot scan the barcode, enter the barcode number below.
+            </p>
+
+            <form method="GET"
+                  action="{% url 'scan_barcode' %}"
+                  class="manual-form">
+
+                <input
+                    type="text"
+                    name="barcode"
+                    class="form-control"
+                    placeholder="e.g. CN000001"
+                    autocomplete="off"
+                    required
+                >
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    Search Barcode
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="https://unpkg.com/html5-qrcode"
+        type="text/javascript"></script>
+
+<script>
+
+    const statusElement = document.getElementById("status");
+
+    let scannerStarted = false;
+
+
+    function onScanSuccess(decodedText, decodedResult) {
+
+        if (scannerStarted) {
+            return;
+        }
+
+        scannerStarted = true;
+
+        statusElement.innerText =
+            "Barcode detected: " + decodedText;
+
+        html5QrcodeScanner.clear().then(() => {
+
+            window.location.href =
+                "{% url 'scan_barcode' %}?barcode=" +
+                encodeURIComponent(decodedText);
+
+        }).catch(error => {
+
+            console.error(error);
+
+            window.location.href =
+                "{% url 'scan_barcode' %}?barcode=" +
+                encodeURIComponent(decodedText);
+
+        });
+    }
+
+
+    function onScanFailure(error) {
+        // Ignore continuous scanning errors.
+    }
+
+
+    const html5QrcodeScanner =
+        new Html5QrcodeScanner(
+            "reader",
+            {
+                fps: 10,
+
+                qrbox: {
+                    width: 280,
+                    height: 150
+                },
+
+                rememberLastUsedCamera: true,
+
+                supportedScanTypes: [
+                    Html5QrcodeScanType.SCAN_TYPE_CAMERA
+                ]
+            },
+
+            false
+        );
+
+
+    html5QrcodeScanner.render(
+        onScanSuccess,
+        onScanFailure
+    );
+
+</script>
+
+{% endblock %}

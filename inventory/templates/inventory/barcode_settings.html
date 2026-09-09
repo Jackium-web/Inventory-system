@@ -1,0 +1,263 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Barcode Settings | Hotel Inventory{% endblock %}
+
+{% block page_title %}Barcode Settings{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        max-width: 750px;
+        margin: auto;
+    }
+
+    .settings-card {
+        background: white;
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .settings-card h1 {
+        font-size: 25px;
+        margin-bottom: 8px;
+    }
+
+    .settings-description {
+        color: #64748b;
+        margin-bottom: 28px;
+        line-height: 1.5;
+    }
+
+    .preview-box {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 25px 0;
+    }
+
+    .preview-label {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .preview-code {
+        font-size: 30px;
+        font-weight: 700;
+        color: #1d4ed8;
+        letter-spacing: 1px;
+        word-break: break-all;
+    }
+
+    .help-text {
+        display: block;
+        margin-top: 6px;
+        color: #64748b;
+        font-size: 13px;
+    }
+
+    .actions {
+        margin-top: 25px;
+    }
+
+    @media (max-width: 768px) {
+        .settings-card {
+            padding: 20px;
+        }
+
+        .settings-card h1 {
+            font-size: 22px;
+        }
+
+        .preview-code {
+            font-size: 24px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="settings-container">
+
+    {% if success %}
+        <div class="alert alert-success">
+                    {{ success }}
+        </div>
+    {% endif %}
+
+    {% if error %}
+        <div class="alert alert-error">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <div class="settings-card">
+
+        <h1>Barcode Configuration</h1>
+
+        <p class="settings-description">
+            Configure how newly generated hotel barcodes should be
+            numbered. Existing barcodes will not be changed.
+        </p>
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <div class="form-group">
+
+                <label for="prefix">
+                    Barcode Prefix
+                </label>
+
+                <input
+                    type="text"
+                    id="prefix"
+                    name="prefix"
+                    class="form-control"
+                    value="{{ settings.prefix }}"
+                    placeholder="Example: MAK-"
+                    required
+                >
+
+                <small class="help-text">
+                    Example: MAK- will produce MAK-00001.
+                </small>
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="next_number">
+                    Next Number
+                </label>
+
+                <input
+                    type="number"
+                    id="next_number"
+                    name="next_number"
+                    class="form-control"
+                    value="{{ settings.next_number }}"
+                    min="1"
+                    required
+                >
+
+                <small class="help-text">
+                    The number that the next new barcode will use.
+                </small>
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="digits">
+                    Number of Digits
+                </label>
+
+                <input
+                    type="number"
+                    id="digits"
+                    name="digits"
+                    class="form-control"
+                    value="{{ settings.digits }}"
+                    min="1"
+                    required
+                >
+
+                <small class="help-text">
+                    Example: 5 produces 00001. 6 produces 000001.
+                </small>
+
+            </div>
+
+            <div class="preview-box">
+
+                <div class="preview-label">
+                    NEXT BARCODE PREVIEW
+                </div>
+
+                <div
+                    class="preview-code"
+                    id="preview-code"
+                >
+                    {{ settings.generate_code }}
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    Save Barcode Settings
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+    const prefixInput =
+        document.getElementById("prefix");
+
+    const numberInput =
+        document.getElementById("next_number");
+
+    const digitsInput =
+        document.getElementById("digits");
+
+    const preview =
+        document.getElementById("preview-code");
+
+
+    function updatePreview() {
+
+        const prefix =
+            prefixInput.value;
+
+        const number =
+            parseInt(numberInput.value) || 1;
+
+        const digits =
+            parseInt(digitsInput.value) || 1;
+
+        const formattedNumber =
+            String(number).padStart(digits, "0");
+
+        preview.textContent =
+            prefix + formattedNumber;
+    }
+
+
+    prefixInput.addEventListener(
+        "input",
+        updatePreview
+    );
+
+    numberInput.addEventListener(
+        "input",
+        updatePreview
+    );
+
+    digitsInput.addEventListener(
+        "input",
+        updatePreview
+    );
+
+
+    updatePreview();
+
+</script>
+
+{% endblock %}

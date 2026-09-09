@@ -1,0 +1,370 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Print Barcodes | Hotel Inventory{% endblock %}
+
+{% block page_title %}Print Barcodes{% endblock %}
+
+{% block extra_css %}
+<style>
+
+    .print-page {
+        max-width: 1200px;
+        margin: auto;
+        animation: page-enter .4s ease both;
+    }
+
+    @keyframes page-enter {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .print-heading {
+        margin-bottom: 25px;
+    }
+
+    .print-heading h1 {
+        font-size: 28px;
+        margin-bottom: 7px;
+    }
+
+    .print-heading p {
+        color: #64748b;
+    }
+
+    .print-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .print-toolbar .print-controls {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        flex-wrap: wrap;
+    }
+
+    .print-controls label {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .print-controls input {
+        width: 86px;
+        padding: 10px 11px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        color: #172033;
+        font-weight: 700;
+    }
+
+    .print-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 11px 15px;
+        border-radius: 8px;
+        color: white;
+        background: #0f766e;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: .2s ease;
+    }
+
+    .print-btn:hover {
+        background: #115e59;
+        transform: translateY(-1px);
+    }
+
+    .print-btn::before {
+        content: "";
+        display: block;
+        width: 15px;
+        height: 15px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9V2h12v7'/%3E%3Cpath d='M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M6 14h12v8H6z'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+
+    .print-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .barcode-count {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .barcode-count strong {
+        color: #172033;
+    }
+
+   .barcode-sheet {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8mm;
+        }
+
+        .barcode-label {
+            height: 25mm;
+            border: 1px dashed #777;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            page-break-inside: avoid;
+            transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .barcode-label:hover {
+            border-color: #0f766e;
+            box-shadow: 0 7px 16px rgba(15, 118, 110, .12);
+            transform: translateY(-2px);
+        }
+
+        .barcode-label img {
+            width: 90%;
+            height: auto;
+            max-height: 16mm;
+        }
+
+        .barcode-number {
+            font-size: 12px;
+            margin-top: 2px;
+            font-weight: bold;
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        color: #64748b;
+    }
+
+    .empty-state .icon {
+        display: grid;
+        place-items: center;
+        width: 58px;
+        height: 58px;
+        margin: 0 auto 15px;
+        border-radius: 15px;
+        color: #0f766e;
+        background: #d9f4ed;
+    }
+
+    .empty-state .icon svg {
+        width: 28px;
+        height: 28px;
+        stroke-width: 1.8;
+    }
+
+    .empty-state h2 {
+        color: #172033;
+        margin-bottom: 8px;
+    }
+
+    @media (max-width: 768px) {
+
+        .print-card {
+            padding: 18px;
+        }
+
+        .print-heading h1 {
+            font-size: 23px;
+        }
+
+        .print-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .barcode-sheet {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .barcode-label {
+            min-height: 90px;
+        }
+
+    }
+
+    @media print {
+
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+
+        .sidebar,
+        .topbar,
+        .mobile-header,
+        .print-heading,
+        .print-toolbar {
+            display: none !important;
+        }
+
+        .main {
+            margin-left: 0 !important;
+        }
+
+        .content {
+            padding: 0 !important;
+            max-width: none !important;
+        }
+
+        .print-page {
+            max-width: none;
+            margin: 0;
+        }
+
+        .print-card {
+            padding: 0;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        .barcode-sheet {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6mm;
+        }
+
+        .barcode-label {
+            min-height: 30mm;
+            border: 1px dashed #999;
+            border-radius: 0;
+            page-break-inside: avoid;
+        }
+
+        .barcode-label img {
+            width: 90%;
+            max-height: 17mm;
+        }
+
+        .barcode-number {
+            font-size: 11px;
+        }
+
+    }
+
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="print-page">
+
+    <div class="print-heading">
+        <h1>Print Barcodes</h1>
+        <p>
+            Print your generated barcode labels and attach them to inventory products.
+        </p>
+    </div>
+
+
+    <div class="print-card">
+
+        {% if barcodes %}
+
+            <div class="print-toolbar">
+
+                <div class="barcode-count">
+                    <strong>{{ total_available }}</strong>
+                    barcode{{ total_available|pluralize }} available
+                </div>
+
+                <form method="GET" class="print-controls">
+
+                    <label for="quantity">
+                        Print:
+                    </label>
+
+                    <input
+                        type="number"
+                        id="quantity"
+                        name="quantity"
+                        min="1"
+                        max="{{ total_available }}"
+                        value="{{ barcodes|length }}"
+                        required
+                    >
+
+                    <button
+                        type="submit"
+                        class="btn btn-secondary"
+                    >
+                        Select
+                    </button>
+
+                    <a
+                        href="{% url 'generate_barcode_pdf' %}?quantity={{ selected_quantity }}"
+                        target="_blank"
+                        class="print-btn"
+                    >
+                        Print Barcodes
+                    </a>
+
+                </form>
+
+            </div>
+            <div class="barcode-sheet">
+
+                {% for barcode in barcodes %}
+
+                    <div class="barcode-label">
+
+                        <img
+                            src="{% url 'barcode_image' barcode.barcode_number %}"
+                            alt="Barcode {{ barcode.barcode_number }}"
+                        >
+
+                        <div class="barcode-number">
+                            {{ barcode.barcode_number }}
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <div class="icon"><i data-lucide="barcode"></i></div>
+
+                <h2>No Barcodes Available</h2>
+
+                <p>
+                    There are currently no unassigned barcodes waiting to be printed.
+                </p>
+
+                <br>
+
+                <a
+                    href="{% url 'generate_barcodes' %}"
+                    class="btn btn-primary"
+                >
+                    <i data-lucide="barcode"></i>Generate Barcodes
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

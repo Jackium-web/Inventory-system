@@ -1,0 +1,96 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Product Fields{% endblock %}
+{% block page_title %}Product Fields{% endblock %}
+
+{% block extra_css %}
+<style>
+    .fields-page { max-width: 1400px; margin: 0 auto; animation: page-enter .4s ease both; }
+    @keyframes page-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fields-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+    .fields-header h1 { margin: 0 0 7px; color: #172033; font-size: 30px; }
+    .fields-header p { margin: 0; color: #64748b; }
+    .primary-btn, .empty-action { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 9px; padding: 11px 16px; color: white; background: #0f766e; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; transition: .2s ease; }
+    .primary-btn:hover, .empty-action:hover { background: #115e59; transform: translateY(-1px); }
+    .primary-btn svg, .empty-action svg { width: 16px; height: 16px; }
+    .info-box { display: flex; gap: 14px; margin-bottom: 20px; padding: 18px; border: 1px solid #c8ebe3; border-radius: 14px; background: #effbf8; }
+    .info-icon, .summary-icon { display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 11px; color: #0f766e; background: #d9f4ed; }
+    .info-icon svg, .summary-icon svg { width: 19px; height: 19px; stroke-width: 1.8; }
+    .info-box strong { display: block; margin-bottom: 5px; color: #115e59; font-size: 14px; }
+    .info-box p { margin: 5px 0 0; color: #47615e; font-size: 13px; line-height: 1.55; }
+    .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .summary-card { display: flex; align-items: center; gap: 13px; padding: 18px; border: 1px solid #e2e8f0; border-radius: 14px; background: white; box-shadow: 0 5px 16px rgba(15,23,42,.04); transition: .2s ease; }
+    .summary-card:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(15,23,42,.08); }
+    .summary-card span { display: block; margin-bottom: 3px; color: #64748b; font-size: 11px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+    .summary-card strong { color: #172033; font-size: 25px; }
+    .fields-card { overflow: hidden; border: 1px solid #e2e8f0; border-radius: 16px; background: white; box-shadow: 0 5px 16px rgba(15,23,42,.04); }
+    .table-header, .field-row { display: grid; grid-template-columns: 58px 1.1fr 1.5fr 1fr 100px 100px 230px; align-items: center; gap: 12px; padding: 15px 20px; }
+    .table-header { color: #94a3b8; background: #fbfcfd; font-size: 10px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
+    .field-row { min-height: 70px; border-top: 1px solid #edf1f5; transition: background .2s ease; }
+    .field-row:hover { background: #f7fcfb; }
+    .order-number { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; color: #0f766e; background: #d9f4ed; }
+    .order-number svg { width: 16px; height: 16px; }
+    .category-badge, .type-badge { display: inline-flex; align-items: center; padding: 6px 9px; border-radius: 7px; font-size: 12px; font-weight: 700; }
+    .category-badge { color: #334155; background: #f1f5f9; }
+    .type-badge { color: #0f766e; background: #ecfdf8; }
+    .field-name { color: #172033; font-size: 14px; }
+    .field-row small { display: block; margin-top: 5px; color: #94a3b8; font-size: 11px; }
+    .yes, .status.active { color: #15803d; font-size: 12px; font-weight: 700; }
+    .no, .status.disabled { color: #94a3b8; font-size: 12px; font-weight: 600; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .toggle-form { display: inline; margin: 0; }
+    .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 0; border-radius: 7px; padding: 7px 9px; font-size: 11px; font-weight: 700; cursor: pointer; text-decoration: none; transition: .2s ease; }
+    .action-btn:hover { transform: translateY(-1px); }
+    .action-btn svg { width: 14px; height: 14px; }
+    .action-btn.edit { color: #0f766e; background: #ecfdf8; }
+    .action-btn.disable { color: #b91c1c; background: #fef2f2; }
+    .action-btn.enable { color: #15803d; background: #f0fdf4; }
+    .empty-state { padding: 62px 20px; color: #64748b; text-align: center; }
+    .empty-icon { display: grid; place-items: center; width: 52px; height: 52px; margin: 0 auto 14px; border-radius: 14px; color: #0f766e; background: #d9f4ed; }
+    .empty-icon svg { width: 24px; height: 24px; }
+    .empty-state h3 { margin: 0 0 8px; color: #172033; }
+    .empty-state p { max-width: 440px; margin: 0 auto 20px; line-height: 1.5; }
+    @media (max-width: 950px) { .table-header, .field-row { grid-template-columns: 45px 1fr 1.3fr 90px 90px 170px; } .table-header div:nth-child(4), .field-row > div:nth-child(4) { display: none; } }
+    @media (max-width: 700px) { .fields-header { align-items: stretch; flex-direction: column; } .primary-btn { width: 100%; } .summary-grid { grid-template-columns: 1fr; } .table-header { display: none; } .field-row { grid-template-columns: 40px 1fr; gap: 10px; padding: 17px; } .field-row > div { grid-column: 2; } .field-row > div:first-child { grid-column: 1; grid-row: 1 / span 6; } .field-row > div:nth-child(2)::before { content: "Category"; } .field-row > div:nth-child(3)::before { content: "Field"; } .field-row > div:nth-child(4)::before { content: "Type"; } .field-row > div:nth-child(5)::before { content: "Required"; } .field-row > div:nth-child(6)::before { content: "Status"; } .field-row > div:nth-child(7)::before { content: "Actions"; } .field-row > div:not(:first-child)::before { display: block; margin-bottom: 4px; color: #94a3b8; font-size: 10px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fields-page">
+    <div class="fields-header">
+        <div><h1>Product Fields</h1><p>Configure the information collected for products in each category.</p></div>
+        <a href="{% url 'add_product_field' %}" class="primary-btn"><i data-lucide="plus"></i> Add Field</a>
+    </div>
+
+    <div class="info-box">
+        <div class="info-icon"><i data-lucide="circle-help"></i></div>
+        <div><strong>Dynamic product data</strong><p>Fields appear during registration according to each category. Disabling a field preserves existing values.</p></div>
+    </div>
+
+    <div class="summary-grid">
+        <div class="summary-card"><div class="summary-icon"><i data-lucide="list"></i></div><div><span>Total fields</span><strong>{{ fields|length }}</strong></div></div>
+        <div class="summary-card"><div class="summary-icon"><i data-lucide="list-checks"></i></div><div><span>Configured fields</span><strong>{{ fields|length }}</strong></div></div>
+    </div>
+
+    <div class="fields-card">
+        <div class="table-header"><div>Order</div><div>Category</div><div>Field Name</div><div>Type</div><div>Required</div><div>Status</div><div>Actions</div></div>
+        {% for field in fields %}
+            <div class="field-row">
+                <div class="order-number" title="Display order"><i data-lucide="grip-vertical"></i></div>
+                <div><span class="category-badge">{{ field.category.name }}</span></div>
+                <div><strong class="field-name">{{ field.name }}</strong>{% if field.field_type == "dropdown" and field.options %}<small>Options: {{ field.options }}</small>{% endif %}</div>
+                <div><span class="type-badge">{{ field.get_field_type_display }}</span></div>
+                <div>{% if field.required %}<span class="yes">Required</span>{% else %}<span class="no">Optional</span>{% endif %}</div>
+                <div>{% if field.enabled %}<span class="status active">Enabled</span>{% else %}<span class="status disabled">Disabled</span>{% endif %}</div>
+                <div class="actions">
+                    <a href="{% url 'edit_product_field' field.id %}" class="action-btn edit"><i data-lucide="pencil"></i> Edit</a>
+                    <form method="POST" action="{% url 'toggle_product_field' field.id %}" class="toggle-form">{% csrf_token %}{% if field.enabled %}<button type="submit" class="action-btn disable" onclick="return confirm('Disable the {{ field.name }} field? Existing product data will be preserved.');"><i data-lucide="eye-off"></i> Disable</button>{% else %}<button type="submit" class="action-btn enable"><i data-lucide="eye"></i> Enable</button>{% endif %}</form>
+                    <form method="POST" action="{% url 'delete_product_field' field.id %}" class="toggle-form">{% csrf_token %}<button type="submit" class="action-btn disable" onclick="return confirm('Delete the {{ field.name }} field and its saved values?');"><i data-lucide="trash-2"></i> Delete</button></form>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state"><div class="empty-icon"><i data-lucide="list-plus"></i></div><h3>No Product Fields</h3><p>You have not created any product fields yet. Add your first field to begin building dynamic product registration forms.</p><a href="{% url 'add_product_field' %}" class="empty-action"><i data-lucide="plus"></i> Add Your First Field</a></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,581 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Categories{% endblock %}
+{% block page_title %}Categories{% endblock %}
+
+{% block content %}
+
+{% if error %}
+    <div class="category-alert">
+        <i data-lucide="triangle-alert"></i>
+        <span>{{ error }}</span>
+    </div>
+{% endif %}
+
+<div class="page-header">
+
+    <div>
+        <h1>Product Categories</h1>
+        <p>
+            Manage categories and configure the fields
+            required for each type of product.
+        </p>
+    </div>
+
+    <a href="{% url 'add_category' %}" class="primary-btn">
+        <i data-lucide="plus"></i> Add Category
+    </a>
+
+</div>
+
+
+<div class="info-box">
+
+    <div class="info-icon">
+        <i data-lucide="layers-3"></i>
+    </div>
+
+    <div>
+        <strong>Dynamic Categories & Fields</strong>
+
+        <p>
+            Categories are created and managed by you.
+            Each category can have its own completely
+            configurable product fields.
+        </p>
+    </div>
+
+</div>
+
+
+<div class="category-grid">
+
+    {% for category in categories %}
+
+    <div class="category-card">
+
+        <div class="category-top">
+
+            <div class="category-icon">
+                <i data-lucide="folder-tree"></i>
+            </div>
+
+            {% if category.enabled %}
+
+                <span class="status active">
+                    Enabled
+                </span>
+
+            {% else %}
+
+                <span class="status disabled">
+                    Disabled
+                </span>
+
+            {% endif %}
+
+        </div>
+
+
+        <h2>
+            {{ category.name }}
+        </h2>
+
+
+        {% if category.description %}
+
+            <p class="description">
+                {{ category.description }}
+            </p>
+
+        {% else %}
+
+            <p class="description muted">
+                No description provided.
+            </p>
+
+        {% endif %}
+
+
+        <div class="category-meta">
+
+            <div class="meta-item">
+
+                <span class="meta-label">
+                    Display Order
+                </span>
+
+                <strong>
+                    {{ category.order }}
+                </strong>
+
+            </div>
+
+
+            <div class="meta-item">
+
+                <span class="meta-label">
+                    Product Fields
+                </span>
+
+                <strong>
+                    {{ category.fields.count }}
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="category-actions">
+
+            <a
+                href="{% url 'category_dashboard' category.id %}"
+                class="secondary-btn"
+            >
+                <i data-lucide="layout-dashboard"></i> Open Dashboard
+            </a>
+
+            <a
+                href="{% url 'category_fields' category.id %}"
+                class="secondary-btn"
+            >
+                <i data-lucide="sliders-horizontal"></i> Manage Fields
+            </a>
+
+
+            <a
+                href="{% url 'edit_category' category.id %}"
+                class="edit-btn"
+                title="Edit this category"
+            >
+                <i data-lucide="pencil"></i> Edit
+            </a>
+
+            <form method="POST" action="{% url 'delete_category' category.id %}">
+                {% csrf_token %}
+                <button
+                    type="submit"
+                    class="delete-btn"
+                    title="Delete this category"
+                    onclick="return confirm('Delete {{ category.name }} and all of its product fields? This cannot be undone.');"
+                >
+                    <i data-lucide="trash-2"></i>
+                </button>
+            </form>
+
+        </div>
+
+    </div>
+
+    {% empty %}
+
+    <div class="empty-state">
+
+        <div class="empty-icon">
+            <i data-lucide="folder-plus"></i>
+        </div>
+
+        <h3>
+            No Categories Yet
+        </h3>
+
+        <p>
+            Create your first product category to begin
+            building your dynamic inventory system.
+        </p>
+
+        <a
+            href="{% url 'add_category' %}"
+            class="primary-btn"
+        >
+            <i data-lucide="plus"></i> Create First Category
+        </a>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+
+<style>
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.page-header p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+
+.primary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: #0f766e;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: 0.2s ease;
+    white-space: nowrap;
+}
+
+.primary-btn:hover {
+    background: #115e59;
+    transform: translateY(-1px);
+}
+
+
+/* INFO BOX */
+
+.info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 24px;
+}
+
+.category-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 13px 16px;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    color: #991b1b;
+    background: #fef2f2;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.category-alert svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+}
+
+.info-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0f766e;
+    background: #d9f4ed;
+}
+
+.info-icon svg,
+.category-icon svg,
+.empty-icon svg,
+.category-actions svg,
+.primary-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 1.9;
+}
+
+.info-box strong {
+    display: block;
+    color: #1e40af;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.info-box p {
+    color: #475569;
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* CATEGORY GRID */
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+
+/* CATEGORY CARD */
+
+.category-card {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    transition: 0.2s ease;
+    animation: category-enter .4s ease both;
+}
+
+@keyframes category-enter {
+    from { opacity: 0; transform: translateY(7px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.category-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.09);
+}
+
+
+/* TOP */
+
+.category-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.category-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    color: #0f766e;
+    background: #d9f4ed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* STATUS */
+
+.status {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status.active {
+    color: #16a34a;
+}
+
+.status.disabled {
+    color: #94a3b8;
+}
+
+
+/* TITLE */
+
+.category-card h2 {
+    margin: 18px 0 8px;
+    color: #0f172a;
+    font-size: 19px;
+    font-weight: 700;
+}
+
+
+/* DESCRIPTION */
+
+.description {
+    min-height: 42px;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.description.muted {
+    color: #94a3b8;
+}
+
+
+/* META */
+
+.category-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 15px;
+    margin-top: 18px;
+    gap: 15px;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.meta-label {
+    color: #94a3b8;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.meta-item strong {
+    color: #334155;
+    font-size: 14px;
+}
+
+
+/* ACTIONS */
+
+.category-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.secondary-btn,
+.edit-btn,
+.delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.secondary-btn:hover,
+.edit-btn:hover {
+    transform: translateY(-1px);
+}
+
+.secondary-btn {
+    flex: 1;
+    background: #ecfdf8;
+    color: #0f766e;
+}
+
+.secondary-btn:hover {
+    background: #d9f4ed;
+}
+
+.edit-btn {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.edit-btn:hover {
+    background: #e2e8f0;
+}
+
+.delete-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    color: #b91c1c;
+    background: #fef2f2;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    color: white;
+    background: #dc2626;
+}
+
+.delete-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+
+/* EMPTY STATE */
+
+.empty-state {
+    grid-column: 1 / -1;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    padding: 70px 20px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 45px;
+    margin-bottom: 12px;
+}
+
+.empty-state h3 {
+    color: #334155;
+    margin: 5px 0;
+    font-size: 20px;
+}
+
+.empty-state p {
+    color: #64748b;
+    max-width: 450px;
+    margin: 8px auto 20px;
+    line-height: 1.5;
+}
+
+
+/* TABLET */
+
+@media (max-width: 1000px) {
+
+    .category-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+
+/* MOBILE */
+
+@media (max-width: 650px) {
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .primary-btn {
+        width: 100%;
+    }
+
+    .category-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .info-box {
+        padding: 15px;
+    }
+
+    .category-card {
+        padding: 18px;
+    }
+
+}
+
+</style>
+
+{% endblock %}

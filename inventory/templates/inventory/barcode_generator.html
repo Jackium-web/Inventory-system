@@ -1,0 +1,567 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Generate Barcodes | Hotel Inventory{% endblock %}
+
+{% block page_title %}Generate Barcodes{% endblock %}
+
+{% block extra_css %}
+<style>
+    .generator-container {
+        max-width: 900px;
+        margin: auto;
+        animation: page-enter .4s ease both;
+    }
+
+    @keyframes page-enter {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-heading {
+        margin-bottom: 25px;
+    }
+
+    .page-heading h1 {
+        font-size: 28px;
+        margin-bottom: 7px;
+        color: #172033;
+    }
+
+    .page-heading p {
+        color: #64748b;
+        line-height: 1.5;
+    }
+
+    .generator-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .generator-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .generator-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, .08);
+    }
+
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .card-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: #eff6ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f766e;
+        background: #d9f4ed;
+    }
+
+    .card-icon svg {
+        width: 21px;
+        height: 21px;
+        stroke-width: 1.8;
+    }
+
+    .card-title h2 {
+        font-size: 18px;
+        color: #172033;
+    }
+
+    .card-description {
+        color: #64748b;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 22px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #334155;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 13px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 9px;
+        font-size: 16px;
+        outline: none;
+        background: white;
+        transition: 0.2s;
+    }
+
+    .form-control:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .quantity-input {
+        font-size: 20px;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .help-text {
+        display: block;
+        margin-top: 7px;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .preview-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .preview-label {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    .preview-code {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1d4ed8;
+        letter-spacing: 1px;
+        word-break: break-all;
+    }
+
+    .info-card {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        padding: 18px;
+        margin-top: 20px;
+    }
+
+    .info-card h3 {
+        font-size: 14px;
+        color: #1e40af;
+        margin-bottom: 8px;
+    }
+
+    .info-card p {
+        color: #475569;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .generate-button {
+        width: 100%;
+        padding: 14px 18px;
+        border: none;
+        border-radius: 9px;
+        background: #0f766e;
+        color: white;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+        margin-top: 5px;
+    }
+
+    .generate-button:hover {
+        background: #115e59;
+        transform: translateY(-1px);
+    }
+
+    .generate-button:active {
+        transform: scale(0.99);
+    }
+
+    .success-box {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        padding: 14px 16px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .error-box {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+        padding: 14px 16px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .settings-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 12px 18px;
+        margin-top: 10px;
+        border-radius: 9px;
+        text-decoration: none;
+        background: #e5e7eb;
+        color: #172033;
+        font-size: 14px;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+
+    .settings-link:hover {
+        background: #d1d5db;
+    }
+
+    .settings-link::before {
+        content: "";
+        width: 16px;
+        height: 16px;
+        margin-right: 7px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230f766e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z'/%3E%3Cpath d='M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 1.7-.06-.06A1.7 1.7 0 0 0 16.16 19a1.7 1.7 0 0 0-1.05 1.57V20.7h-2.4v-.13A1.7 1.7 0 0 0 11.66 19a1.7 1.7 0 0 0-1.88.34l-.06.06-1.7-1.7.06-.06A1.7 1.7 0 0 0 8.42 15a1.7 1.7 0 0 0-1.57-1.05H6.7v-2.4h.15A1.7 1.7 0 0 0 8.42 10a1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.7-1.7.06.06A1.7 1.7 0 0 0 11.66 6a1.7 1.7 0 0 0 1.05-1.57V4.3h2.4v.13A1.7 1.7 0 0 0 16.16 6a1.7 1.7 0 0 0 1.88-.34l.06-.06 1.7 1.7-.06.06A1.7 1.7 0 0 0 19.4 10a1.7 1.7 0 0 0 1.57 1.05h.15v2.4h-.15A1.7 1.7 0 0 0 19.4 15Z'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+
+    .steps {
+        margin-top: 20px;
+    }
+
+    .step {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+
+    .step-number {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        color: #0f766e;
+        background: #d9f4ed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .step-number svg {
+        width: 15px;
+        height: 15px;
+        stroke-width: 2;
+    }
+
+    .step-text {
+        color: #475569;
+        font-size: 13px;
+        line-height: 1.5;
+        padding-top: 4px;
+    }
+
+    @media (max-width: 768px) {
+
+        .generator-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .page-heading h1 {
+            font-size: 23px;
+        }
+
+        .generator-card {
+            padding: 20px;
+        }
+
+        .preview-code {
+            font-size: 24px;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="generator-container">
+
+    <div class="page-heading">
+        <h1>Generate New Barcodes</h1>
+
+        <p>
+            Create unique barcode numbers for hotel inventory items.
+            You can generate any quantity required.
+        </p>
+    </div>
+
+
+    {% if success %}
+        <div class="success-box">
+            {{ success }}
+        </div>
+    {% endif %}
+
+
+    {% if error %}
+        <div class="error-box">
+            {{ error }}
+        </div>
+    {% endif %}
+
+
+    <div class="generator-grid">
+
+        <!-- GENERATOR -->
+
+        <div class="generator-card">
+
+            <div class="card-title">
+
+                <div class="card-icon">
+                    <i data-lucide="barcode"></i>
+                </div>
+
+                <h2>Generate Barcodes</h2>
+
+            </div>
+
+
+            <p class="card-description">
+                Enter the number of barcodes you need. The system will
+                automatically generate unique barcode numbers using your
+                current barcode configuration.
+            </p>
+
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+
+                <div class="form-group">
+
+                    <label for="quantity">
+                        Number of Barcodes
+                    </label>
+
+                    <input
+                        type="number"
+                        id="quantity"
+                        name="quantity"
+                        class="form-control quantity-input"
+                        min="1"
+                        step="1"
+                        placeholder="Example: 1000"
+                        required
+                    >
+
+                    <small class="help-text">
+                        Enter any positive quantity.
+                    </small>
+
+                </div>
+
+
+                <div class="preview-card">
+
+                    <div class="preview-label">
+                        BARCODE FORMAT
+                    </div>
+
+                    <div
+                        class="preview-code"
+                        id="barcode-preview"
+                    >
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="generate-button"
+                >
+                    Generate Barcodes
+                </button>
+
+            </form>
+
+
+            <a
+                href="{% url 'barcode_settings' %}"
+                class="settings-link"
+            >
+                Barcode Settings
+            </a>
+
+        </div>
+
+
+        <!-- INFORMATION -->
+
+        <div class="generator-card">
+
+            <div class="card-title">
+
+                <div class="card-icon">
+                    <i data-lucide="circle-help"></i>
+                </div>
+
+                <h2>How It Works</h2>
+
+            </div>
+
+
+            <p class="card-description">
+                Barcodes are generated sequentially and each barcode
+                receives a unique number.
+            </p>
+
+
+            <div class="steps">
+
+                <div class="step">
+
+                    <div class="step-number"><i data-lucide="hash"></i></div>
+
+                    <div class="step-text">
+                        Enter how many barcodes you want.
+                    </div>
+
+                </div>
+
+
+                <div class="step">
+
+                    <div class="step-number"><i data-lucide="wand-sparkles"></i></div>
+
+                    <div class="step-text">
+                        The system generates unique barcode numbers.
+                    </div>
+
+                </div>
+
+
+                <div class="step">
+
+                    <div class="step-number"><i data-lucide="link-2"></i></div>
+
+                    <div class="step-text">
+                        The generated barcodes remain unassigned until
+                        they are linked to products.
+                    </div>
+
+                </div>
+
+
+                <div class="step">
+
+                    <div class="step-number"><i data-lucide="check"></i></div>
+
+                    <div class="step-text">
+                        You can then print the generated barcode labels.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <h3>Example</h3>
+
+                <p>
+                    If your barcode settings use
+                    <strong>MAK-</strong> with 5 digits,
+                    generating 10 barcodes will produce:
+                    <br><br>
+
+                    <strong>
+                        MAK-00001<br>
+                        MAK-00002<br>
+                        MAK-00003<br>
+                        ...<br>
+                        MAK-00010
+                    </strong>
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const preview =
+        document.getElementById("barcode-preview");
+
+
+    function updateBarcodePreview() {
+
+        /*
+         * These values are passed from Django.
+         * If the settings object exists, use its
+         * current configuration.
+         */
+
+        const prefix =
+            "{{ settings.prefix|default:'CN' }}";
+
+        const nextNumber =
+            parseInt(
+                "{{ settings.next_number|default:'1' }}"
+            ) || 1;
+
+        const digits =
+            parseInt(
+                "{{ settings.digits|default:'6' }}"
+            ) || 6;
+
+
+        const formattedNumber =
+            String(nextNumber).padStart(
+                digits,
+                "0"
+            );
+
+
+        preview.textContent =
+            prefix + formattedNumber;
+    }
+
+
+    updateBarcodePreview();
+
+</script>
+
+{% endblock %}

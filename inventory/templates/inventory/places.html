@@ -1,0 +1,89 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Hotel Places | Hotel Inventory{% endblock %}
+{% block page_title %}Hotel Places{% endblock %}
+
+{% block extra_css %}
+<style>
+    .places-page { max-width: 1100px; margin: auto; }
+    .places-grid { display: grid; grid-template-columns: 340px 1fr; gap: 20px; }
+    .places-panel { background: white; border-radius: 14px; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,.05); }
+    .places-panel h1, .places-panel h2 { margin-bottom: 8px; }
+    .places-panel p { color: #64748b; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 7px; }
+    .form-control { width: 100%; padding: 11px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
+    .btn { border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .btn-primary { background: #0f766e; color: white; }
+    .alert { padding: 12px 14px; border-radius: 8px; background: #fee2e2; color: #991b1b; margin-bottom: 18px; }
+    .place-row { display: grid; grid-template-columns: 120px 1fr auto; gap: 16px; align-items: center; padding: 16px 0; border-bottom: 1px solid #e5e7eb; }
+    .place-row:last-child { border-bottom: 0; }
+    .place-image { width: 120px; height: 82px; object-fit: cover; border-radius: 8px; background: #f1f5f9; }
+    .place-name { font-weight: 700; margin-bottom: 5px; }
+    .place-description { color: #64748b; font-size: 13px; }
+    .delete-button { border: 0; background: transparent; color: #991b1b; cursor: pointer; }
+    .pin-status { display: block; color: #64748b; font-size: 13px; margin-top: 8px; }
+    .place-coordinates { color: #64748b; font-size: 12px; margin-top: 5px; }
+    @media (max-width: 800px) { .places-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 520px) { .place-row { grid-template-columns: 80px 1fr; } .place-image { width: 80px; height: 65px; } .place-row form { grid-column: 2; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="places-page">
+    <div class="places-grid">
+        <section class="places-panel">
+            <h1>Add Hotel Place</h1>
+            <p>Add rooms, stores, offices, kitchens, or any other place where products are kept or used.</p>
+            {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+            <form method="post" enctype="multipart/form-data" id="place-form">
+                {% csrf_token %}
+                <div class="form-group"><label for="name">Place name</label><input id="name" name="name" class="form-control" placeholder="For example: Main Store" required></div>
+                <div class="form-group"><label for="description">Description</label><textarea id="description" name="description" class="form-control" rows="4" placeholder="Help staff identify this place"></textarea></div>
+                <div class="form-group"><label for="image">Place image</label><input id="image" name="image" class="form-control" type="file" accept="image/*"></div>
+                <input type="hidden" id="latitude" name="latitude">
+                <input type="hidden" id="longitude" name="longitude">
+                <button class="btn" type="button" id="pin-location">Pin Current Location</button>
+                <span class="pin-status" id="pin-status">Location is optional. Your browser will ask for permission.</span>
+                <button class="btn btn-primary" type="submit">Add Place</button>
+            </form>
+        </section>
+
+        <section class="places-panel">
+            <h2>Configured Hotel Places</h2>
+            <p>These places are available when recording product movements.</p>
+            {% for place in places %}
+                <div class="place-row">
+                    {% if place.image %}<img class="place-image" src="{{ place.image.url }}" alt="{{ place.name }}">{% else %}<div class="place-image"></div>{% endif %}
+                    <div><div class="place-name">{{ place.name }}</div><div class="place-description">{{ place.description|default:"No description added." }}</div>{% if place.latitude and place.longitude %}<div class="place-coordinates">Pinned: {{ place.latitude }}, {{ place.longitude }}</div>{% endif %}</div>
+                    <form method="post" action="{% url 'delete_place' place.id %}">{% csrf_token %}<button class="delete-button" type="submit" onclick="return confirm('Remove this place? Existing movement history will remain.');">Remove</button></form>
+                </div>
+            {% empty %}
+                <p>No hotel places have been added yet.</p>
+            {% endfor %}
+        </section>
+    </div>
+</div>
+<script>
+    const pinButton = document.getElementById("pin-location");
+    const pinStatus = document.getElementById("pin-status");
+
+    pinButton?.addEventListener("click", () => {
+        if (!navigator.geolocation) {
+            pinStatus.textContent = "Location is not supported by this browser.";
+            return;
+        }
+
+        pinStatus.textContent = "Finding your location...";
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                document.getElementById("latitude").value = position.coords.latitude.toFixed(6);
+                document.getElementById("longitude").value = position.coords.longitude.toFixed(6);
+                pinStatus.textContent = "Location pinned and ready to save.";
+            },
+            () => { pinStatus.textContent = "Location permission was unavailable. You can save the place without a pin."; },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    });
+</script>
+{% endblock %}

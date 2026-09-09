@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Hotel Inventory{% endblock %}</title>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            background: #f4f7fb;
+            color: #172033;
+        }
+
+        /* =========================
+           SIDEBAR
+        ========================= */
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 240px;
+            height: 100vh;
+            background: #111827;
+            color: white;
+            padding: 24px 16px;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 21px;
+            font-weight: bold;
+            margin-bottom: 35px;
+            padding: 0 12px;
+        }
+
+        .logo span {
+            color: #3b82f6;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #cbd5e1;
+            padding: 12px 14px;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .nav-link svg {
+            width: 17px;
+            height: 17px;
+            color: #8ba4b7;
+            stroke-width: 1.8;
+            transition: transform .2s ease, color .2s ease;
+        }
+
+        .nav-link:hover {
+            background: #1e293b;
+            color: white;
+        }
+
+        .nav-link:hover svg {
+            color: #8ee1d0;
+            transform: translateX(2px);
+        }
+
+        .nav-link::before {
+            content: none;
+        }
+
+        /* =========================
+           MAIN CONTENT
+        ========================= */
+
+        .main {
+            margin-left: 240px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: 70px;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .topbar h2 {
+            font-size: 20px;
+            color: #172033;
+        }
+
+        .content {
+            padding: 30px;
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        /* =========================
+           CARDS
+        ========================= */
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        /* =========================
+           BUTTONS
+        ========================= */
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: #0f766e;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #115e59;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+            stroke-width: 2;
+        }
+
+        /* =========================
+           FORMS
+        ========================= */
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 7px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            background: white;
+        }
+
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* =========================
+           GRID
+        ========================= */
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        /* =========================
+           ALERTS
+        ========================= */
+
+        .alert {
+            padding: 13px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        .mobile-header {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+
+            .sidebar {
+                display: none;
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .topbar {
+                display: none;
+            }
+
+            .mobile-header {
+                display: flex;
+                height: 60px;
+                background: #111827;
+                color: white;
+                align-items: center;
+                padding: 0 18px;
+            }
+
+            .mobile-header h2 {
+                font-size: 18px;
+            }
+
+            .content {
+                padding: 18px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .card {
+                padding: 18px;
+                border-radius: 12px;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+                margin-bottom: 8px;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            Hotel<span>Inventory</span>
+        </div>
+
+        <nav>
+            {% if user.is_staff %}
+                <a href="{% url 'dashboard' %}" class="nav-link">
+            {% else %}
+                {% with assignment=user.category_assignments.all|first %}
+                    {% if assignment %}
+                        <a href="{% url 'category_dashboard' assignment.category.id %}" class="nav-link">
+                    {% else %}
+                        <a href="{% url 'dashboard' %}" class="nav-link">
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
+                <i data-lucide="layout-dashboard"></i>
+                Dashboard
+            </a>
+
+            {% if user.is_staff %}
+                <a href="{% url 'categories' %}" class="nav-link">
+                    <i data-lucide="layers-3"></i>
+                    Categories
+                </a>
+
+                <a href="{% url 'product_fields' %}" class="nav-link">
+                    <i data-lucide="sliders-horizontal"></i>
+                    Product Fields
+                </a>
+
+                <a href="{% url 'places' %}" class="nav-link">
+                    <i data-lucide="map-pinned"></i>
+                    Hotel Places
+                </a>
+            {% endif %}
+
+            <a href="{% url 'scan_barcode' %}" class="nav-link">
+                <i data-lucide="scan-line"></i>
+                Scan Barcode
+            </a>
+
+            {% if user.is_staff %}
+                <a href="{% url 'assigned_items' %}" class="nav-link">
+                    <i data-lucide="boxes"></i>
+                    Assigned Items
+                </a>
+            {% endif %}
+
+            {% if user.is_staff %}
+                <a href="{% url 'generate_barcodes' %}" class="nav-link">
+                    <i data-lucide="barcode"></i>
+                    Generate Barcodes
+                </a>
+
+                <a href="{% url 'print_barcodes' %}" class="nav-link">
+                    <i data-lucide="printer"></i>
+                    Print Barcodes
+                </a>
+            {% endif %}
+
+        </nav>
+
+    </aside>
+
+
+    <!-- Main -->
+    <main class="main">
+
+        <!-- Mobile Header -->
+        <header class="mobile-header">
+            <h2>Hotel Inventory</h2>
+        </header>
+
+        <!-- Desktop Header -->
+        <header class="topbar">
+            <h2>{% block page_title %}Inventory System{% endblock %}</h2>
+
+            <div>
+                Hotel Inventory
+                {% if user.is_authenticated %}
+                    <span style="margin-left: 18px; color: #64748b;">{{ user.username }}</span>
+                    <form method="post" action="{% url 'logout' %}" style="display:inline; margin-left: 10px;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary">Sign Out</button>
+                    </form>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <section class="content">
+
+            {% block content %}
+            {% endblock %}
+
+        </section>
+
+    </main>
+
+    <script>
+        lucide.createIcons({ attrs: { 'aria-hidden': 'true' } });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,343 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Edit Product | Hotel Inventory{% endblock %}
+
+{% block page_title %}Edit Product{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-page {
+        max-width: 950px;
+        margin: auto;
+    }
+
+    .page-heading {
+        margin-bottom: 25px;
+    }
+
+    .page-heading h1 {
+        font-size: 28px;
+        margin-bottom: 7px;
+    }
+
+    .page-heading p {
+        color: #64748b;
+    }
+
+    .barcode-banner {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+    }
+
+    .barcode-label {
+        color: #64748b;
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .barcode-number {
+        font-size: 21px;
+        font-weight: 700;
+        color: #1d4ed8;
+        letter-spacing: 1px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .section-title {
+        font-size: 18px;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    @media (max-width: 600px) {
+
+        .page-heading h1 {
+            font-size: 23px;
+        }
+
+        .form-card {
+            padding: 18px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="form-page">
+
+    <div class="page-heading">
+        <h1>Edit Product</h1>
+        <p>
+            Update the information associated with this barcode.
+        </p>
+    </div>
+
+
+    <!-- Barcode -->
+    <div class="barcode-banner">
+
+        <div class="barcode-label">
+            BARCODE
+        </div>
+
+        <div class="barcode-number">
+            {{ product.barcode.barcode_number }}
+        </div>
+
+    </div>
+
+
+    <!-- Edit Form -->
+    <div class="form-card">
+
+        <h2 class="section-title">
+            {{ product.department }} Details
+        </h2>
+
+        <form method="POST" enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            <div class="form-group">
+
+                <label for="product_name">
+                    Product Name *
+                </label>
+
+                <input
+                    type="text"
+                    id="product_name"
+                    name="product_name"
+                    class="form-control"
+                    value="{% if product_name %}{{ product_name }}{% else %}{{ product.product_name }}{% endif %}"
+                    required
+                >
+
+            </div>
+
+            {% if product_fields %}
+
+                <div class="grid">
+
+                    {% for field in product_fields %}
+
+                        <div class="form-group">
+
+                            <label for="field_{{ field.id }}">
+                                {{ field.name }}
+                                {% if field.required %}*{% endif %}
+                            </label>
+
+                            {% if field.field_type == "text" %}
+                                <input type="text" id="field_{{ field.id }}" name="field_{{ field.id }}" class="form-control" value="{{ field.current_value }}" {% if field.required %}required{% endif %}>
+                            {% elif field.field_type == "number" %}
+                                <input type="number" id="field_{{ field.id }}" name="field_{{ field.id }}" class="form-control" value="{{ field.current_value }}" {% if field.required %}required{% endif %}>
+                            {% elif field.field_type == "decimal" %}
+                                <input type="number" step="0.01" id="field_{{ field.id }}" name="field_{{ field.id }}" class="form-control" value="{{ field.current_value }}" {% if field.required %}required{% endif %}>
+                            {% elif field.field_type == "date" %}
+                                <input type="date" id="field_{{ field.id }}" name="field_{{ field.id }}" class="form-control" value="{{ field.current_value }}" {% if field.required %}required{% endif %}>
+                            {% elif field.field_type == "boolean" %}
+                                <select id="field_{{ field.id }}" name="field_{{ field.id }}" class="form-control" {% if field.required %}required{% endif %}>
+                                    <option value="">Select...</option>
+                                    <option value="yes" {% if field.current_value == "yes" %}selected{% endif %}>Yes</option>
+                                    <option value="no" {% if field.current_value == "no" %}selected{% endif %}>No</option>
+                                </select>
+                            {% elif field.field_type == "dropdown" %}
+                                <select id="field_{{ field.id }}" name="field_{{ field.id }}" class="form-control" {% if field.required %}required{% endif %}>
+                                    <option value="">Select {{ field.name }}</option>
+                                    {% for option in field.dropdown_options %}
+                                        <option value="{{ option }}" {% if field.current_value == option %}selected{% endif %}>{{ option }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+                <p>No product fields have been configured for this department.</p>
+            {% endif %}
+
+
+            <div class="form-group">
+
+                <label for="description">
+                    Description
+                </label>
+
+                <textarea
+                    id="description"
+                    name="description"
+                    class="form-control"
+                    rows="4"
+                >{% if description %}{{ description }}{% else %}{{ product.description }}{% endif %}</textarea>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="quantity">
+                    Current Stock
+                </label>
+
+                <input
+                    type="number"
+                    id="quantity"
+                    name="quantity"
+                    class="form-control"
+                    min="0"
+                    step="0.01"
+                    value="{% if quantity != None %}{{ quantity }}{% else %}{{ product.inventory.quantity }}{% endif %}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="product_image">
+                    Product Image
+                </label>
+
+                {% if product.image %}
+                    <div style="margin-bottom: 12px;">
+                        <img
+                            src="{{ product.image.url }}"
+                            alt="Product image for {{ product.barcode.barcode_number }}"
+                            style="
+                                width: 180px;
+                                height: 180px;
+                                object-fit: contain;
+                                border-radius: 12px;
+                                background: #f8fafc;
+                                border: 1px solid #e5e7eb;
+                                padding: 5px;
+                            "
+                        >
+                    </div>
+                {% endif %}
+
+                <input
+                    type="file"
+                    id="product_image"
+                    name="image"
+                    class="form-control"
+                    accept="image/*"
+                    capture="environment"
+                >
+
+                <small style="
+                    display:block;
+                    margin-top:7px;
+                    color:#64748b;
+                ">
+                    Take a new photo or choose an image from your device.
+                </small>
+
+                <div
+                    id="image-preview"
+                    style="display:none; margin-top:15px;"
+                >
+                    <img
+                        id="preview-image"
+                        src=""
+                        alt="New product image"
+                        style="
+                            width:180px;
+                            height:180px;
+                            object-fit:contain;
+                            border-radius:12px;
+                            background:#f8fafc;
+                            border:1px solid #e5e7eb;
+                            padding:5px;
+                        "
+                    >
+                </div>
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    Save Changes
+                </button>
+
+                <a
+                    href="{% url 'scan_barcode' %}?barcode={{ product.barcode.barcode_number }}"
+                    class="btn btn-secondary"
+                >
+                    Cancel
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+    const imageInput = document.getElementById("product_image");
+    const previewContainer = document.getElementById("image-preview");
+    const previewImage = document.getElementById("preview-image");
+
+    imageInput.addEventListener("change", function () {
+
+        const file = this.files[0];
+
+        if (!file) {
+            previewContainer.style.display = "none";
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+
+            previewImage.src = event.target.result;
+
+            previewContainer.style.display = "block";
+        };
+
+        reader.readAsDataURL(file);
+    });
+</script>
+
+{% endblock %}

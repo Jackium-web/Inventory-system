@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Administrator Sign In | Hotel Inventory</title>
+<style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f7fb; color: #172033; font-family: "Segoe UI", Tahoma, sans-serif; }
+    .login-page {
+        max-width: 440px;
+        width: min(100% - 36px, 440px);
+    }
+
+    .login-card {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .login-card h1 {
+        margin-bottom: 8px;
+    }
+
+    .login-card p {
+        color: #64748b;
+        margin-bottom: 24px;
+    }
+
+    .login-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 18px;
+    }
+
+    .login-card .btn {
+        width: 100%;
+        margin-top: 8px;
+    }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 7px; }
+    .form-control { width: 100%; padding: 12px 13px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; }
+    .btn { border: 0; border-radius: 8px; padding: 12px 18px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: #0f766e; color: white; }
+</style>
+</head>
+<body>
+<div class="login-page">
+    <div class="login-card">
+        <h1>Administrator access</h1>
+        <p>Sign in to manage users and inventory settings.</p>
+
+        {% if error %}
+            <div class="login-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_username">Username</label>
+                <input type="text" name="username" id="id_username" class="form-control" autofocus required>
+            </div>
+
+            <div class="form-group">
+                <label for="id_password">Password</label>
+                <input type="password" name="password" id="id_password" class="form-control" required>
+            </div>
+
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
+            <button type="submit" class="btn btn-primary">Administrator Sign In</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

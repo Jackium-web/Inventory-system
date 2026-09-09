@@ -1,0 +1,614 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Edit Product Field{% endblock %}
+{% block page_title %}Edit Product Field{% endblock %}
+
+{% block content %}
+
+<div class="page-container">
+
+
+<div class="page-header">
+
+    <a href="{% url 'product_fields' %}" class="back-link">
+        Back to Product Fields
+    </a>
+
+    <h1>Edit Product Field</h1>
+
+    <p>
+        Update the configuration of this dynamic product field.
+    </p>
+
+</div>
+
+
+{% if error %}
+
+<div class="alert">
+
+    <div class="alert-icon">
+        !
+    </div>
+
+    <div>
+        <strong>Unable to save changes</strong>
+        <p>{{ error }}</p>
+    </div>
+
+</div>
+
+{% endif %}
+
+
+<div class="form-card">
+
+    <div class="card-header">
+
+        <div class="header-icon">
+            EDIT
+        </div>
+
+        <div>
+            <h2>Field Configuration</h2>
+
+            <p>
+                Modify the field settings below.
+            </p>
+        </div>
+
+    </div>
+
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+
+        <!-- CATEGORY -->
+
+        <div class="form-group">
+
+            <label for="category">
+                Product Category
+                <span class="required">*</span>
+            </label>
+
+            <select
+                id="category"
+                name="category"
+                required
+            >
+
+                {% for category in categories %}
+
+                <option
+                    value="{{ category.id }}"
+                    {% if category.id == field.category.id %}
+                        selected
+                    {% endif %}
+                >
+                    {{ category.name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+            <small>
+                Moving this field to another category will make it
+                available to products in that category instead.
+            </small>
+
+        </div>
+
+
+        <!-- FIELD NAME -->
+
+        <div class="form-group">
+
+            <label for="name">
+                Field Name
+                <span class="required">*</span>
+            </label>
+
+            <input
+                type="text"
+                id="name"
+                name="name"
+                value="{{ field.name }}"
+                maxlength="100"
+                required
+            >
+
+        </div>
+
+
+        <!-- FIELD TYPE -->
+
+        <div class="form-group">
+
+            <label for="field_type">
+                Field Type
+                <span class="required">*</span>
+            </label>
+
+            <select
+                id="field_type"
+                name="field_type"
+                required
+            >
+
+                <option value="text"
+                    {% if field.field_type == "text" %}selected{% endif %}>
+                    Text
+                </option>
+
+                <option value="number"
+                    {% if field.field_type == "number" %}selected{% endif %}>
+                    Number
+                </option>
+
+                <option value="decimal"
+                    {% if field.field_type == "decimal" %}selected{% endif %}>
+                    Decimal
+                </option>
+
+                <option value="date"
+                    {% if field.field_type == "date" %}selected{% endif %}>
+                    Date
+                </option>
+
+                <option value="boolean"
+                    {% if field.field_type == "boolean" %}selected{% endif %}>
+                    Yes / No
+                </option>
+
+                <option value="dropdown"
+                    {% if field.field_type == "dropdown" %}selected{% endif %}>
+                    Dropdown
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- OPTIONS -->
+
+        <div
+            class="form-group"
+            id="options-group"
+        >
+
+            <label for="options">
+                Dropdown Options
+            </label>
+
+            <textarea
+                id="options"
+                name="options"
+                rows="4"
+                placeholder="Example: Samsung, LG, Sony"
+            >{{ field.options }}</textarea>
+
+            <small>
+                Separate options with commas.
+            </small>
+
+        </div>
+
+
+        <!-- REQUIRED -->
+
+        <div class="setting-row">
+
+            <div>
+
+                <strong>
+                    Required Field
+                </strong>
+
+                <p>
+                    Users must provide this value when registering
+                    a product.
+                </p>
+
+            </div>
+
+            <label class="switch">
+
+                <input
+                    type="checkbox"
+                    name="required"
+                    {% if field.required %}checked{% endif %}
+                >
+
+                <span class="slider"></span>
+
+            </label>
+
+        </div>
+
+
+        <!-- ENABLED -->
+
+        <div class="setting-row">
+
+            <div>
+
+                <strong>
+                    Field Enabled
+                </strong>
+
+                <p>
+                    Disabled fields will no longer appear on new
+                    product registration forms.
+                </p>
+
+            </div>
+
+            <label class="switch">
+
+                <input
+                    type="checkbox"
+                    name="enabled"
+                    {% if field.enabled %}checked{% endif %}
+                >
+
+                <span class="slider"></span>
+
+            </label>
+
+        </div>
+
+
+        <!-- ACTIONS -->
+
+        <div class="actions">
+
+            <a
+                href="{% url 'product_fields' %}"
+                class="cancel-btn"
+            >
+                Cancel
+            </a>
+
+            <button
+                type="submit"
+                class="save-btn"
+            >
+                Save Changes
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+```
+
+</div>
+
+<style>
+
+.page-container {
+    max-width: 850px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+.back-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.page-header h1 {
+    margin: 10px 0 5px;
+    color: #0f172a;
+    font-size: 30px;
+}
+
+.page-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.form-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 5px 25px rgba(15, 23, 42, 0.07);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 25px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.header-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: #eff6ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 23px;
+}
+
+.card-header h2 {
+    margin: 0 0 4px;
+    color: #0f172a;
+    font-size: 19px;
+}
+
+.card-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+form {
+    padding: 28px;
+}
+
+.form-group {
+    margin-bottom: 23px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.required {
+    color: #dc2626;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #0f172a;
+    outline: none;
+}
+
+.form-group input,
+.form-group select {
+    height: 48px;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 7px;
+    color: #94a3b8;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.alert {
+    display: flex;
+    gap: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.alert-icon {
+    width: 25px;
+    height: 25px;
+    background: #dc2626;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.alert p {
+    margin: 4px 0 0;
+    font-size: 13px;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 16px;
+    margin-top: 10px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.setting-row strong {
+    color: #334155;
+    font-size: 14px;
+}
+
+.setting-row p {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.switch {
+    position: relative;
+    width: 48px;
+    height: 27px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    inset: 0;
+    background: #cbd5e1;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: .25s;
+}
+
+.slider:before {
+    content: "";
+    position: absolute;
+    width: 21px;
+    height: 21px;
+    left: 3px;
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: .25s;
+}
+
+.switch input:checked + .slider {
+    background: #2563eb;
+}
+
+.switch input:checked + .slider:before {
+    transform: translateX(21px);
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.cancel-btn,
+.save-btn {
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cancel-btn {
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+}
+
+.save-btn {
+    color: white;
+    background: #2563eb;
+    border: 1px solid #2563eb;
+}
+
+.save-btn:hover {
+    background: #1d4ed8;
+}
+
+@media (max-width: 600px) {
+
+    .page-header h1 {
+        font-size: 24px;
+    }
+
+    form {
+        padding: 20px;
+    }
+
+    .card-header {
+        padding: 20px;
+        align-items: flex-start;
+    }
+
+    .setting-row {
+        align-items: flex-start;
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+    }
+
+    .cancel-btn,
+    .save-btn {
+        width: 100%;
+    }
+
+}
+
+</style>
+
+<script>
+
+const fieldType = document.getElementById("field_type");
+const optionsGroup = document.getElementById("options-group");
+
+
+function updateOptionsVisibility() {
+
+    if (fieldType.value === "dropdown") {
+
+        optionsGroup.style.display = "block";
+
+    } else {
+
+        optionsGroup.style.display = "none";
+
+    }
+
+}
+
+
+fieldType.addEventListener(
+    "change",
+    updateOptionsVisibility
+);
+
+updateOptionsVisibility();
+
+</script>
+
+{% endblock %}
