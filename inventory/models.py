@@ -1,4 +1,6 @@
 from django.db import models
+from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -203,18 +205,6 @@ class Place(models.Model):
     name = models.CharField(max_length=150, unique=True)
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to="places/", blank=True, null=True)
-    latitude = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True,
-    )
-    longitude = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True,
-    )
     enabled = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -334,4 +324,57 @@ class ProductFieldValue(models.Model):
     def __str__(self):
         return f"{self.product.product_name} - {self.field.name}"
 
+
+class ProductPairing(models.Model):
+    """
+    Model to pair two products together.
+    For example: pairing a laptop with its charger.
+    Each product retains its own barcode and can be tracked separately.
+    """
+    primary_product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="pairings_as_primary"
+    )
+    
+    paired_product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="pairings_as_paired"
+    )
+    
+    relationship_type = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Example: Charger for, Accessory for, Included with, etc."
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ("primary_product", "paired_product")
+        ordering = ("-created_at",)
+
+    def clean(self):
+        """Keep a pairing between two different products unique in either direction."""
+        if self.primary_product_id == self.paired_product_id:
+            raise ValidationError("A product cannot be paired with itself.")
+
+        if self.primary_product_id and self.paired_product_id:
+            duplicate_exists = ProductPairing.objects.filter(
+                Q(
+                    primary_product_id=self.primary_product_id,
+                    paired_product_id=self.paired_product_id,
+                )
+                | Q(
+                    primary_product_id=self.paired_product_id,
+                    paired_product_id=self.primary_product_id,
+                )
+            ).exclude(pk=self.pk).exists()
+            if duplicate_exists:
+                raise ValidationError("These products are already paired.")
+    
+    def __str__(self):
+        return f"{self.primary_product.product_name} ↔ {self.paired_product.product_name}"
 

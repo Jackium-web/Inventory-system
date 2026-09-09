@@ -10,6 +10,7 @@ from .models import (
 	Place,
 	ProductField,
 	ProductFieldValue,
+	ProductPairing,
 )
 
 admin.site.register(
@@ -24,5 +25,6 @@ admin.site.register(
 		Place,
 		ProductField,
 		ProductFieldValue,
+		ProductPairing,
 	]
 )

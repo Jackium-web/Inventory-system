@@ -15,7 +15,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from .models import (Product, Inventory, Place, ProductMovement, BarcodeSettings, Barcode, ProductField, Category, ProductFieldValue, CategoryAssignment)
+from .models import (Product, Inventory, Place, ProductMovement, BarcodeSettings, Barcode, ProductField, Category, ProductFieldValue, CategoryAssignment, ProductPairing)
 from django.utils import timezone
 from django.db import models, transaction
 from django.db.models import Sum
@@ -54,6 +54,54 @@ def _user_can_access_category(user, category):
         user=user,
         category=category,
     ).exists()
+
+
+def _product_pairings(user, product):
+    """Return the product at the other end of each pairing for display."""
+    pairings = ProductPairing.objects.filter(
+        models.Q(primary_product=product) | models.Q(paired_product=product)
+    ).select_related("primary_product__barcode", "paired_product__barcode")
+    permitted_departments = None
+    if not user.is_staff:
+        permitted_departments = set(CategoryAssignment.objects.filter(
+            user=user,
+        ).values_list("category__name", flat=True))
+
+    visible_pairings = []
+    for pairing in pairings:
+        pairing.other_product = (
+            pairing.paired_product
+            if pairing.primary_product_id == product.id
+            else pairing.primary_product
+        )
+        if permitted_departments is None or pairing.other_product.department in permitted_departments:
+            visible_pairings.append(pairing)
+    return visible_pairings
+
+
+def _products_available_for_pairing(user, product):
+    products = Product.objects.select_related("barcode").exclude(id=product.id)
+    if not user.is_staff:
+        permitted_departments = CategoryAssignment.objects.filter(
+            user=user,
+        ).values_list("category__name", flat=True)
+        products = products.filter(department__in=permitted_departments)
+    return products.order_by("product_name", "barcode__barcode_number")
+
+
+def _product_details_context(request, product, **extra):
+    context = {
+        "product": product,
+        "product_fields": _product_fields_with_values(product),
+        "movements": product.movements.select_related(
+            "moved_by", "from_place", "to_place",
+        ).all(),
+        "places": Place.objects.filter(enabled=True),
+        "pairings": _product_pairings(request.user, product),
+        "pairing_candidates": _products_available_for_pairing(request.user, product),
+    }
+    context.update(extra)
+    return context
 
 
 def _staff_only(user):
@@ -482,12 +530,7 @@ def scan_barcode(request):
         return render(
             request,
             "inventory/product_details.html",
-            {
-                "product": product,
-                "product_fields": _product_fields_with_values(product),
-                "movements": product.movements.select_related("moved_by").all(),
-                "places": Place.objects.filter(enabled=True),
-            }
+            _product_details_context(request, product),
         )
 
 
@@ -739,14 +782,11 @@ def scan_barcode(request):
         return render(
             request,
             "inventory/product_details.html",
-            {
-                "product": product,
-                "product_fields": _product_fields_with_values(product),
-                "movements": product.movements.select_related("moved_by").all(),
-                "places": Place.objects.filter(enabled=True),
-                "success":
-                    "Product registered successfully."
-            }
+            _product_details_context(
+                request,
+                product,
+                success="Product registered successfully.",
+            ),
         )
 
 
@@ -856,13 +896,11 @@ def edit_product(request, product_id):
         return render(
             request,
             "inventory/product_details.html",
-            {
-                "product": product,
-                "product_fields": _product_fields_with_values(product),
-                "movements": product.movements.select_related("moved_by").all(),
-                "places": Place.objects.filter(enabled=True),
-                "success": "Product updated successfully."
-            }
+            _product_details_context(
+                request,
+                product,
+                success="Product updated successfully.",
+            ),
         )
 
     return render(
@@ -888,17 +926,72 @@ def product_details(request, product_id):
     return render(
         request,
         "inventory/product_details.html",
-        {
-            "product": product,
-            "product_fields": _product_fields_with_values(product),
-            "movements": product.movements.select_related(
-                "moved_by",
-                "from_place",
-                "to_place",
-            ).all(),
-            "places": Place.objects.filter(enabled=True),
-        },
+        _product_details_context(request, product),
     )
+
+
+def add_product_pairing(request, product_id):
+    """Pair two registered products while keeping their barcodes independent."""
+    product = get_object_or_404(Product.objects.select_related("barcode"), id=product_id)
+    category = Category.objects.filter(name=product.department).first()
+    if not _user_can_access_category(request.user, category):
+        return redirect("dashboard")
+    if request.method != "POST":
+        return redirect("product_details", product_id=product.id)
+
+    paired_product_id = request.POST.get("paired_product_id")
+    relationship_type = request.POST.get("relationship_type", "").strip()
+    paired_product = Product.objects.filter(id=paired_product_id).select_related("barcode").first()
+
+    if not paired_product:
+        error = "Choose a registered product to pair."
+    elif not _user_can_access_category(
+        request.user, Category.objects.filter(name=paired_product.department).first()
+    ):
+        error = "You do not have access to the selected product."
+    elif paired_product.id == product.id:
+        error = "A product cannot be paired with itself."
+    elif ProductPairing.objects.filter(
+        models.Q(primary_product=product, paired_product=paired_product)
+        | models.Q(primary_product=paired_product, paired_product=product)
+    ).exists():
+        error = "These products are already paired."
+    else:
+        ProductPairing.objects.create(
+            primary_product=product,
+            paired_product=paired_product,
+            relationship_type=relationship_type,
+        )
+        return redirect(f"{reverse('product_details', args=[product.id])}?pairing_success=added")
+
+    return render(
+        request,
+        "inventory/product_details.html",
+        _product_details_context(request, product, pairing_error=error),
+    )
+
+
+def remove_product_pairing(request, product_id, pairing_id):
+    product = get_object_or_404(Product, id=product_id)
+    pairing = get_object_or_404(
+        ProductPairing.objects.select_related("primary_product", "paired_product"), id=pairing_id
+    )
+    if product.id not in (pairing.primary_product_id, pairing.paired_product_id):
+        return redirect("product_details", product_id=product.id)
+
+    other_product = (
+        pairing.paired_product if pairing.primary_product_id == product.id else pairing.primary_product
+    )
+    if not _user_can_access_category(
+        request.user, Category.objects.filter(name=product.department).first()
+    ) or not _user_can_access_category(
+        request.user, Category.objects.filter(name=other_product.department).first()
+    ):
+        return redirect("dashboard")
+    if request.method == "POST":
+        pairing.delete()
+        return redirect(f"{reverse('product_details', args=[product.id])}?pairing_success=removed")
+    return redirect("product_details", product_id=product.id)
 
 
 def add_product_movement(request, product_id):
@@ -1015,8 +1108,6 @@ def places(request):
         name = request.POST.get("name", "").strip()
         description = request.POST.get("description", "").strip()
         image = request.FILES.get("image")
-        latitude = request.POST.get("latitude", "").strip() or None
-        longitude = request.POST.get("longitude", "").strip() or None
 
         if not name:
             return render(
@@ -1042,8 +1133,6 @@ def places(request):
             name=name,
             description=description,
             image=image,
-            latitude=latitude,
-            longitude=longitude,
         )
         return redirect("places")
 
@@ -1159,6 +1248,17 @@ def assigned_items(request):
     products = Product.objects.select_related(
         "barcode",
         "inventory"
+    ).prefetch_related(
+        models.Prefetch(
+            "pairings_as_primary",
+            queryset=ProductPairing.objects.select_related("paired_product__barcode"),
+            to_attr="primary_pairings",
+        ),
+        models.Prefetch(
+            "pairings_as_paired",
+            queryset=ProductPairing.objects.select_related("primary_product__barcode"),
+            to_attr="paired_pairings",
+        ),
     ).filter(
         barcode__status="assigned"
     ).order_by("-created_at")
@@ -1179,6 +1279,22 @@ def assigned_items(request):
             | models.Q(department__icontains=search)
             | models.Q(barcode__barcode_number__icontains=search)
         )
+
+    products = list(products)
+    for product in products:
+        product.paired_items = [
+            {
+                "product": pairing.paired_product,
+                "relationship_type": pairing.relationship_type,
+            }
+            for pairing in product.primary_pairings
+        ] + [
+            {
+                "product": pairing.primary_product,
+                "relationship_type": pairing.relationship_type,
+            }
+            for pairing in product.paired_pairings
+        ]
 
     return render(
         request,

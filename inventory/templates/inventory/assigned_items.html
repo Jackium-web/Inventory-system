@@ -105,7 +105,7 @@
     .items-table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 950px;
+        min-width: 1080px;
     }
 
     .items-table th {
@@ -131,6 +131,48 @@
 
     .items-table tbody tr:hover {
         background: #f8fafc;
+    }
+
+    .items-table tbody tr.has-pairing td:first-child {
+        border-left: 4px solid #8b5cf6;
+        padding-left: 14px;
+    }
+
+    .pairing-cell { min-width: 190px; }
+
+    .paired-item-link {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        width: fit-content;
+        margin: 4px 0;
+        padding: 7px 9px;
+        border: 1px solid #ddd6fe;
+        border-radius: 8px;
+        background: #f5f3ff;
+        color: #6d28d9;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .paired-item-link:hover { background: #ede9fe; border-color: #a78bfa; }
+    .paired-item-link small { color: #7c3aed; font-weight: 600; }
+    .not-paired { color: #94a3b8; font-size: 12px; }
+
+    .mobile-pairing {
+        background: #f5f3ff;
+        border: 1px solid #ddd6fe;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        padding: 10px 12px;
+    }
+
+    .mobile-pairing-label {
+        color: #6d28d9;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 5px;
     }
 
     /* PRODUCT */
@@ -507,6 +549,7 @@
                             <th>Barcode</th>
                             <th>Department</th>
                             <th>Stock</th>
+                            <th>Paired With</th>
                             <th>Actions</th>
                         </tr>
 
@@ -516,7 +559,7 @@
 
                         {% for product in products %}
 
-                            <tr>
+                            <tr{% if product.paired_items %} class="has-pairing"{% endif %}>
 
                                 <!-- PRODUCT -->
 
@@ -594,6 +637,19 @@
                                         {{ product.unit }}
                                     </span>
 
+                                </td>
+
+                                <!-- PAIRED PRODUCTS -->
+
+                                <td class="pairing-cell">
+                                    {% for paired_item in product.paired_items %}
+                                        <a class="paired-item-link" href="{% url 'product_details' paired_item.product.id %}">
+                                            Linked: {{ paired_item.product.product_name }}
+                                            <small>{% if paired_item.relationship_type %}{{ paired_item.relationship_type }} &middot; {% endif %}{{ paired_item.product.barcode.barcode_number }}</small>
+                                        </a>
+                                    {% empty %}
+                                        <span class="not-paired">Not paired</span>
+                                    {% endfor %}
                                 </td>
 
 
@@ -720,6 +776,18 @@
                         </span>
 
                     </div>
+
+                    {% if product.paired_items %}
+                        <div class="mobile-pairing">
+                            <div class="mobile-pairing-label">PAIRED WITH</div>
+                            {% for paired_item in product.paired_items %}
+                                <a class="paired-item-link" href="{% url 'product_details' paired_item.product.id %}">
+                                    Linked: {{ paired_item.product.product_name }}
+                                    <small>{% if paired_item.relationship_type %}{{ paired_item.relationship_type }} &middot; {% endif %}{{ paired_item.product.barcode.barcode_number }}</small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
 
 
                     <div class="mobile-actions">

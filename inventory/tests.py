@@ -10,6 +10,7 @@ from .models import (
 	ProductField,
 	ProductFieldValue,
 	ProductMovement,
+	ProductPairing,
 	Place,
 	CategoryAssignment,
 )
@@ -343,6 +344,104 @@ class InventoryWorkflowTests(TestCase):
 
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, "20")
+
+	def test_user_can_pair_and_unpair_products_with_separate_barcodes(self):
+		charger_barcode = Barcode.objects.create(
+			barcode_number="DAV000003",
+			status="assigned",
+		)
+		charger = Product.objects.create(
+			barcode=charger_barcode,
+			product_name="Laptop Charger",
+			category="Kitchen",
+			department="Kitchen",
+			unit="unit",
+		)
+		Inventory.objects.create(product=charger)
+
+		response = self.client.post(
+			reverse("add_product_pairing", args=[self.product.id]),
+			{
+				"paired_product_id": charger.id,
+				"relationship_type": "Charger for",
+			},
+		)
+		self.assertRedirects(
+			response,
+			f"{reverse('product_details', args=[self.product.id])}?pairing_success=added",
+		)
+		pairing = ProductPairing.objects.get()
+		self.assertEqual(pairing.primary_product, self.product)
+		self.assertEqual(pairing.paired_product, charger)
+
+		response = self.client.get(reverse("product_details", args=[self.product.id]))
+		self.assertContains(response, "Laptop Charger")
+		self.assertContains(response, "DAV000003")
+
+		response = self.client.post(
+			reverse("remove_product_pairing", args=[self.product.id, pairing.id])
+		)
+		self.assertRedirects(
+			response,
+			f"{reverse('product_details', args=[self.product.id])}?pairing_success=removed",
+		)
+		self.assertFalse(ProductPairing.objects.exists())
+
+	def test_pairing_cannot_be_created_twice_in_reverse(self):
+		charger_barcode = Barcode.objects.create(
+			barcode_number="DAV000004",
+			status="assigned",
+		)
+		charger = Product.objects.create(
+			barcode=charger_barcode,
+			product_name="Laptop Charger",
+			category="Kitchen",
+			department="Kitchen",
+			unit="unit",
+		)
+		Inventory.objects.create(product=charger)
+		ProductPairing.objects.create(
+			primary_product=self.product,
+			paired_product=charger,
+		)
+
+		response = self.client.post(
+			reverse("add_product_pairing", args=[charger.id]),
+			{"paired_product_id": self.product.id},
+		)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "These products are already paired.")
+		self.assertEqual(ProductPairing.objects.count(), 1)
+
+	def test_assigned_items_show_linked_product_for_a_pairing(self):
+		self.user.is_staff = True
+		self.user.save(update_fields=["is_staff"])
+		charger_barcode = Barcode.objects.create(
+			barcode_number="DAV000005",
+			status="assigned",
+		)
+		charger = Product.objects.create(
+			barcode=charger_barcode,
+			product_name="Laptop Charger",
+			category="Kitchen",
+			department="Kitchen",
+			unit="unit",
+		)
+		Inventory.objects.create(product=charger)
+		ProductPairing.objects.create(
+			primary_product=self.product,
+			paired_product=charger,
+			relationship_type="Charger for",
+		)
+
+		response = self.client.get(reverse("assigned_items"))
+		self.assertContains(response, "Paired With")
+		self.assertContains(response, "Linked: Laptop Charger")
+		self.assertContains(response, "Charger for")
+		self.assertContains(
+			response,
+			reverse("product_details", args=[charger.id]),
+		)
 
 	def test_product_movement_updates_stock_and_location(self):
 		response = self.client.post(

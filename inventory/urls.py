@@ -29,6 +29,8 @@ from .views import (
     admin_edit_user,
     places,
     delete_place,
+    add_product_pairing,
+    remove_product_pairing,
 )
 
 urlpatterns = [
@@ -72,6 +74,18 @@ urlpatterns = [
         "product/<int:product_id>/movement/",
         add_product_movement,
         name="add_product_movement",
+    ),
+
+    path(
+        "product/<int:product_id>/pairings/add/",
+        add_product_pairing,
+        name="add_product_pairing",
+    ),
+
+    path(
+        "product/<int:product_id>/pairings/<int:pairing_id>/remove/",
+        remove_product_pairing,
+        name="remove_product_pairing",
     ),
 
     path(
