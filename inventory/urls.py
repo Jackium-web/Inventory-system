@@ -31,6 +31,7 @@ from .views import (
     delete_place,
     add_product_pairing,
     remove_product_pairing,
+    download_movement_history_pdf,
 )
 
 urlpatterns = [
@@ -86,6 +87,12 @@ urlpatterns = [
         "product/<int:product_id>/pairings/<int:pairing_id>/remove/",
         remove_product_pairing,
         name="remove_product_pairing",
+    ),
+
+    path(
+        "product/<int:product_id>/movements/pdf/",
+        download_movement_history_pdf,
+        name="download_movement_history_pdf",
     ),
 
     path(

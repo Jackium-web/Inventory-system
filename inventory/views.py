@@ -1024,28 +1024,29 @@ def add_product_movement(request, product_id):
     purpose = request.POST.get("purpose", "").strip()
     notes = request.POST.get("notes", "").strip()
 
+    if movement_type not in dict(ProductMovement.MOVEMENT_TYPES):
+        return redirect("product_details", product_id=product.id)
+
+    inventory = product.inventory
+    quantity_before = inventory.quantity
+
     try:
-        quantity = Decimal(quantity_input)
+        # A single usable item is always moved as one item; no quantity entry is needed.
+        quantity = (
+            Decimal("1")
+            if movement_type == "use" and quantity_before == 1 and not quantity_input
+            else Decimal(quantity_input)
+        )
         if quantity <= 0:
             raise InvalidOperation
     except (InvalidOperation, ValueError):
         return render(
             request,
             "inventory/product_details.html",
-            {
-                "product": product,
-                "product_fields": _product_fields_with_values(product),
-                "movements": product.movements.select_related("moved_by").all(),
-                "movement_error": "Enter a quantity greater than zero.",
-                "places": Place.objects.filter(enabled=True),
-            },
+            _product_details_context(
+                request, product, movement_error="Enter a quantity greater than zero."
+            ),
         )
-
-    if movement_type not in dict(ProductMovement.MOVEMENT_TYPES):
-        return redirect("product_details", product_id=product.id)
-
-    inventory = product.inventory
-    quantity_before = inventory.quantity
 
     if movement_type == "use":
         quantity_after = quantity_before - quantity
@@ -1053,13 +1054,11 @@ def add_product_movement(request, product_id):
             return render(
                 request,
                 "inventory/product_details.html",
-                {
-                    "product": product,
-                    "product_fields": _product_fields_with_values(product),
-                    "movements": product.movements.select_related("moved_by").all(),
-                    "movement_error": "Used quantity cannot exceed current stock.",
-                    "places": Place.objects.filter(enabled=True),
-                },
+                _product_details_context(
+                    request,
+                    product,
+                    movement_error="Used quantity cannot exceed current stock.",
+                ),
             )
     elif movement_type == "adjustment":
         quantity_after = quantity
@@ -1070,13 +1069,11 @@ def add_product_movement(request, product_id):
         return render(
             request,
             "inventory/product_details.html",
-            {
-                "product": product,
-                "product_fields": _product_fields_with_values(product),
-                "movements": product.movements.select_related("moved_by").all(),
-                "movement_error": "Destination is required for a transfer.",
-                "places": Place.objects.filter(enabled=True),
-            },
+            _product_details_context(
+                request,
+                product,
+                movement_error="Destination is required for a transfer.",
+            ),
         )
 
     with transaction.atomic():
@@ -1100,6 +1097,40 @@ def add_product_movement(request, product_id):
         inventory.save(update_fields=["quantity", "location", "updated_at"])
 
     return redirect("product_details", product_id=product.id)
+
+
+def download_movement_history_pdf(request, product_id):
+    """Download a presentable movement-history report for one product."""
+    from weasyprint import HTML
+
+    product = get_object_or_404(Product.objects.select_related("barcode"), id=product_id)
+    category = Category.objects.filter(name=product.department).first()
+    if not _user_can_access_category(request.user, category):
+        return redirect("dashboard")
+
+    movements = product.movements.select_related(
+        "moved_by", "from_place", "to_place",
+    ).all()
+    for movement in movements:
+        movement.from_place_image_url = (
+            request.build_absolute_uri(movement.from_place.image.url)
+            if movement.from_place and movement.from_place.image else ""
+        )
+        movement.to_place_image_url = (
+            request.build_absolute_uri(movement.to_place.image.url)
+            if movement.to_place and movement.to_place.image else ""
+        )
+
+    html = render_to_string(
+        "inventory/movement_history_pdf.html",
+        {"product": product, "movements": movements},
+    )
+    pdf = HTML(string=html, base_url=request.build_absolute_uri("/")).write_pdf()
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="{product.barcode.barcode_number}-movement-history.pdf"'
+    )
+    return response
 
 
 @staff_only

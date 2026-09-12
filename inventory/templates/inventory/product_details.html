@@ -622,65 +622,24 @@
     </div>
 </div>
 
-<div class="detail-card stock-card" style="margin-top: 20px;">
-    <h2>Record Product Movement</h2>
-
-    {% if movement_error %}
-        <div class="success-message" style="background:#fee2e2; color:#991b1b;">
-            {{ movement_error }}
-        </div>
-    {% endif %}
-
-    <form method="post" action="{% url 'add_product_movement' product.id %}">
-        {% csrf_token %}
-        <div class="details-grid">
-            <div>
-                <label for="movement_type">Movement type</label>
-                <select id="movement_type" name="movement_type" class="form-control" required>
-                    <option value="">Select movement</option>
-                    <option value="receive">Received</option>
-                    <option value="transfer">Transferred</option>
-                    <option value="use">Used</option>
-                    <option value="return">Returned</option>
-                    <option value="adjustment">Stock adjustment</option>
-                </select>
-            </div>
-            <div>
-                <label for="movement_quantity">Quantity</label>
-                <input id="movement_quantity" name="quantity" class="form-control" type="number" min="0.01" step="0.01" required>
-            </div>
-            <div>
-                <label for="from_place_id">From place</label>
-                <select id="from_place_id" name="from_place_id" class="form-control">
-                    <option value="">Select place</option>
-                    {% for place in places %}<option value="{{ place.id }}" data-image="{% if place.image %}{{ place.image.url }}{% endif %}">{{ place.name }}</option>{% endfor %}
-                </select>
-                <img id="from-place-preview" style="display:none; width:100%; max-height:120px; object-fit:cover; border-radius:8px; margin-top:8px;" alt="Selected source place">
-                <a id="from-place-directions" class="btn btn-secondary" style="display:none; margin-top:8px;" target="_blank" rel="noopener">Open Directions</a>
-            </div>
-            <div>
-                <label for="to_place_id">To place</label>
-                <select id="to_place_id" name="to_place_id" class="form-control">
-                    <option value="">Select place</option>
-                    {% for place in places %}<option value="{{ place.id }}" data-image="{% if place.image %}{{ place.image.url }}{% endif %}">{{ place.name }}</option>{% endfor %}
-                </select>
-                <img id="to-place-preview" style="display:none; width:100%; max-height:120px; object-fit:cover; border-radius:8px; margin-top:8px;" alt="Selected destination place">
-                <a id="to-place-directions" class="btn btn-secondary" style="display:none; margin-top:8px;" target="_blank" rel="noopener">Open Directions</a>
-            </div>
-            <div>
-                <label for="purpose">Used for / purpose</label>
-                <input id="purpose" name="purpose" class="form-control" placeholder="For example: Room 204">
-            </div>
-            <div>
-                <label for="movement_notes">Notes</label>
-                <input id="movement_notes" name="notes" class="form-control" placeholder="Additional information">
-            </div>
-        </div>
-        <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Save Movement</button>
-    </form>
+<div class="detail-card stock-card movement-launch" style="margin-top:20px;">
+    <div><h2>Product Movements</h2><p class="description">Use place photos to record where this product moves.</p></div>
+    <div class="movement-launch-actions"><button type="button" class="btn btn-primary" id="open-movement-dialog">Record Movement</button><button type="button" class="btn btn-secondary" id="open-history-dialog">View History ({{ movements|length }})</button></div>
 </div>
 
-<div class="detail-card stock-card" style="margin-top: 20px;">
+<dialog id="movement-dialog" class="movement-dialog">
+    <form method="post" action="{% url 'add_product_movement' product.id %}" class="movement-form">
+        {% csrf_token %}
+        <div class="dialog-heading"><div><h2>Record Product Movement</h2><p>Choose the source and destination by photo.</p></div><button type="button" class="dialog-close" data-close="movement-dialog">&times;</button></div>
+        {% if movement_error %}<div class="movement-error">{{ movement_error }}</div>{% endif %}
+        <label for="movement_type">Movement type</label><select id="movement_type" name="movement_type" class="form-control" required><option value="">Select movement</option><option value="receive">Received</option><option value="transfer">Transferred</option><option value="use">Used</option><option value="return">Returned</option><option value="adjustment">Stock adjustment</option></select>
+        <div class="place-picker"><section><h3>From where?</h3><input type="hidden" name="from_place_id" id="from_place_id"><div class="place-options" data-target="from_place_id">{% for place in places %}<button type="button" class="place-option" data-place-id="{{ place.id }}">{% if place.image %}<img src="{{ place.image.url }}" alt="{{ place.name }}">{% else %}<span>No image</span>{% endif %}<strong>{{ place.name }}</strong></button>{% empty %}<p>No places available.</p>{% endfor %}</div></section><section><h3>To where?</h3><input type="hidden" name="to_place_id" id="to_place_id"><div class="place-options" data-target="to_place_id">{% for place in places %}<button type="button" class="place-option" data-place-id="{{ place.id }}">{% if place.image %}<img src="{{ place.image.url }}" alt="{{ place.name }}">{% else %}<span>No image</span>{% endif %}<strong>{{ place.name }}</strong></button>{% empty %}<p>No places available.</p>{% endfor %}</div></section></div>
+        <div class="movement-fields"><div id="quantity-field"><label for="movement_quantity">Quantity moved</label><input id="movement_quantity" name="quantity" class="form-control" type="number" min="0.01" step="0.01" required></div><p id="single-item-note" class="single-item-note" hidden>Only one usable item is in stock. Quantity is set to 1.</p><div><label for="purpose">Purpose for use</label><input id="purpose" name="purpose" class="form-control" placeholder="For example: Room 204"></div><div><label for="movement_notes">Notes</label><textarea id="movement_notes" name="notes" class="form-control" rows="2" placeholder="Additional information"></textarea></div></div>
+        <div class="dialog-actions"><button type="button" class="btn btn-secondary" data-close="movement-dialog">Cancel</button><button type="submit" class="btn btn-primary">Save Movement</button></div>
+    </form>
+</dialog>
+
+<div class="detail-card stock-card movement-history-inline" style="margin-top: 20px;">
     <h2>Movement History</h2>
     {% for movement in movements %}
         <div class="detail-row movement-row" tabindex="0" role="button" data-movement-id="{{ movement.id }}">
@@ -698,6 +657,10 @@
         <div class="description">No product movements have been recorded yet.</div>
     {% endfor %}
 </div>
+
+<dialog id="history-dialog" class="movement-dialog history-dialog">
+    <div class="movement-form"><div class="dialog-heading"><div><h2>Movement History</h2><p>{{ product.product_name }} &middot; {{ product.barcode.barcode_number }}</p></div><button type="button" class="dialog-close" data-close="history-dialog">&times;</button></div><a href="{% url 'download_movement_history_pdf' product.id %}" class="btn btn-primary history-download">Download PDF</a><div class="history-list">{% for movement in movements %}<article class="history-entry"><div class="history-top"><strong>{{ movement.get_movement_type_display }}</strong><span>{{ movement.created_at|date:"M j, Y H:i" }} &middot; {{ movement.quantity }} {{ product.unit }}</span></div><div class="history-places"><div>{% if movement.from_place.image %}<img src="{{ movement.from_place.image.url }}" alt="{{ movement.from_place.name }}">{% else %}<div class="history-no-image">No image</div>{% endif %}<small>FROM</small><strong>{{ movement.from_place.name|default:movement.from_location|default:"Not recorded" }}</strong></div><span>&rarr;</span><div>{% if movement.to_place.image %}<img src="{{ movement.to_place.image.url }}" alt="{{ movement.to_place.name }}">{% else %}<div class="history-no-image">No image</div>{% endif %}<small>TO</small><strong>{{ movement.to_place.name|default:movement.to_location|default:"Not recorded" }}</strong></div></div><p><strong>Purpose:</strong> {{ movement.purpose|default:"Not recorded" }}<br><strong>Notes:</strong> {{ movement.notes|default:"No notes" }}<br><small>Recorded by {{ movement.moved_by.username }}</small></p></article>{% empty %}<p class="description">No product movements have been recorded yet.</p>{% endfor %}</div></div>
+</dialog>
 
 <div id="movement-detail" class="detail-card stock-card" style="display:none; margin-top:20px;">
     <h2>Movement Details</h2>
@@ -779,6 +742,40 @@
 
     document.getElementById("from_place_id")?.addEventListener("change", () => updatePlacePreview("from_place_id", "from-place-preview", "from-place-directions"));
     document.getElementById("to_place_id")?.addEventListener("change", () => updatePlacePreview("to_place_id", "to-place-preview", "to-place-directions"));
+</script>
+
+<style>
+    .movement-launch,.dialog-heading,.dialog-actions,.history-top { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .movement-launch-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .movement-history-inline,#movement-detail { display:none !important; }
+    .movement-dialog { position:fixed; inset:0; width:min(960px,94vw); max-height:90vh; margin:auto; border:0; border-radius:16px; padding:0; box-shadow:0 24px 70px rgba(15,23,42,.35); }
+    .movement-dialog::backdrop { background:rgba(15,23,42,.6); }
+    .movement-form { padding:24px; overflow:auto; max-height:90vh; }
+    .dialog-heading { align-items:flex-start; margin-bottom:18px; }.dialog-heading h2 { margin:0 0 5px; }.dialog-heading p { margin:0; color:#64748b; }
+    .dialog-close { width:36px; height:36px; border:0; border-radius:50%; background:#f1f5f9; font-size:25px; cursor:pointer; }
+    .movement-error { margin-bottom:15px; padding:12px; color:#991b1b; background:#fee2e2; border-radius:8px; }
+    .place-picker { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:18px 0; }.place-picker h3 { font-size:15px; margin-bottom:8px; }
+    .place-options { display:grid; grid-template-columns:repeat(auto-fill,minmax(105px,1fr)); gap:10px; max-height:280px; overflow:auto; padding:3px; }
+    .place-option { padding:0 0 8px; overflow:hidden; border:2px solid #e2e8f0; border-radius:10px; background:white; color:#172033; text-align:left; cursor:pointer; }.place-option img,.place-option span { display:block; width:100%; height:76px; object-fit:cover; background:#f1f5f9; }.place-option span { padding:25px 8px; color:#64748b; font-size:12px; }.place-option strong { display:block; padding:7px 8px; font-size:12px; }.place-option.selected { border-color:#2563eb; box-shadow:0 0 0 2px #bfdbfe; }
+    .movement-fields { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }.movement-fields label,.movement-form>label { display:block; margin-bottom:6px; font-size:14px; font-weight:600; }.single-item-note { padding:11px; color:#047857; background:#ecfdf5; border-radius:8px; }.dialog-actions { justify-content:flex-end; margin-top:22px; }
+    .history-download { margin-bottom:16px; }.history-entry { border:1px solid #e2e8f0; border-radius:12px; padding:15px; margin-bottom:13px; }.history-top strong { color:#1d4ed8; }.history-top span,.history-entry p { color:#475569; font-size:13px; }.history-places { display:grid; grid-template-columns:1fr 35px 1fr; gap:10px; align-items:center; margin:13px 0; }.history-places img,.history-no-image { width:100%; height:115px; object-fit:cover; border-radius:8px; background:#f1f5f9; }.history-no-image { display:flex; align-items:center; justify-content:center; color:#64748b; }.history-places small,.history-places strong { display:block; margin-top:4px; }.history-places small { color:#64748b; font-size:10px; }.history-places>span { text-align:center; font-size:23px; color:#64748b; }
+    @media(max-width:700px) { .movement-launch,.history-top { align-items:flex-start; flex-direction:column; }.place-picker,.movement-fields { grid-template-columns:1fr; }.movement-form { padding:18px; }.history-places img,.history-no-image { height:90px; } }
+</style>
+<script>
+    const movementDialog = document.getElementById("movement-dialog");
+    const historyDialog = document.getElementById("history-dialog");
+    const movementType = document.getElementById("movement_type");
+    const quantityField = document.getElementById("quantity-field");
+    const quantityInput = document.getElementById("movement_quantity");
+    const singleItemNote = document.getElementById("single-item-note");
+    const isSingleUsable = {% if product.inventory.quantity == 1 %}true{% else %}false{% endif %};
+    document.getElementById("open-movement-dialog")?.addEventListener("click", () => movementDialog.showModal());
+    document.getElementById("open-history-dialog")?.addEventListener("click", () => historyDialog.showModal());
+    document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => document.getElementById(button.dataset.close).close()));
+    document.querySelectorAll(".place-options").forEach((group) => group.addEventListener("click", (event) => { const option = event.target.closest(".place-option"); if (!option) return; group.querySelectorAll(".place-option").forEach((item) => item.classList.remove("selected")); option.classList.add("selected"); document.getElementById(group.dataset.target).value = option.dataset.placeId; }));
+    function updateQuantity() { const automatic = movementType.value === "use" && isSingleUsable; quantityField.hidden = automatic; singleItemNote.hidden = !automatic; quantityInput.required = !automatic; if (automatic) quantityInput.value = "1"; }
+    movementType?.addEventListener("change", updateQuantity); updateQuantity();
+    {% if movement_error %} movementDialog.showModal(); {% endif %}
 </script>
 
 

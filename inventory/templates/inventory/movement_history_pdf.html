@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page { size: A4; margin: 16mm; }
+        body { font-family: Arial, sans-serif; color: #172033; font-size: 11px; }
+        h1 { margin: 0 0 4px; font-size: 22px; }
+        .muted { color: #64748b; margin: 0 0 18px; }
+        .movement { border: 1px solid #dbe3ef; border-radius: 8px; margin: 0 0 12px; padding: 12px; page-break-inside: avoid; }
+        .heading { font-weight: bold; font-size: 14px; color: #1d4ed8; }
+        .meta { color: #64748b; margin: 4px 0 10px; }
+        .places { display: table; width: 100%; table-layout: fixed; }
+        .place { display: table-cell; width: 45%; vertical-align: top; }
+        .arrow { display: table-cell; width: 10%; text-align: center; vertical-align: middle; font-size: 18px; color: #64748b; }
+        img { width: 100%; height: 115px; object-fit: cover; border-radius: 6px; }
+        .no-image { height: 115px; background: #f1f5f9; border-radius: 6px; padding: 12px; color: #64748b; }
+        .label { color: #64748b; font-size: 9px; text-transform: uppercase; margin: 6px 0 2px; }
+        .details { margin-top: 10px; } .details strong { margin-right: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Product Movement History</h1>
+    <p class="muted"><strong>{{ product.product_name }}</strong> &middot; Barcode: {{ product.barcode.barcode_number }}</p>
+    {% for movement in movements %}
+        <section class="movement">
+            <div class="heading">{{ movement.get_movement_type_display }} &middot; {{ movement.quantity }} {{ product.unit }}</div>
+            <div class="meta">{{ movement.created_at|date:"M j, Y H:i" }} &middot; Recorded by {{ movement.moved_by.username }}</div>
+            <div class="places">
+                <div class="place"><div class="label">From</div>{% if movement.from_place_image_url %}<img src="{{ movement.from_place_image_url }}">{% else %}<div class="no-image">{{ movement.from_place.name|default:movement.from_location|default:"Not recorded" }}</div>{% endif %}<strong>{{ movement.from_place.name|default:movement.from_location|default:"Not recorded" }}</strong></div>
+                <div class="arrow">&rarr;</div>
+                <div class="place"><div class="label">To</div>{% if movement.to_place_image_url %}<img src="{{ movement.to_place_image_url }}">{% else %}<div class="no-image">{{ movement.to_place.name|default:movement.to_location|default:"Not recorded" }}</div>{% endif %}<strong>{{ movement.to_place.name|default:movement.to_location|default:"Not recorded" }}</strong></div>
+            </div>
+            <div class="details"><strong>Purpose:</strong>{{ movement.purpose|default:"Not recorded" }}<br><strong>Notes:</strong>{{ movement.notes|default:"No notes" }}</div>
+        </section>
+    {% empty %}<p>No movements have been recorded for this product.</p>{% endfor %}
+</body>
+</html>
